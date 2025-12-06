@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>学习路线引导</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+      background: #f5f5f7;
+      line-height: 1.6;
+    }
+
+    h1 {
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      color: #555;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 18px 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      margin-bottom: 16px;
+    }
+
+    .node-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .node-subtitle {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .choice-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .choice-btn {
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      padding: 10px 12px;
+      background: #fafafa;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
+    }
+
+    .choice-btn:hover {
+      background: #f0f7ff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transform: translateY(-1px);
+    }
+
+    .choice-title {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .choice-desc {
+      font-size: 12px;
+      color: #555;
+      margin-top: 2px;
+    }
+
+    .choice-main {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .task-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #fafafa;
+      margin-top: 6px;
+    }
+
+    .task-list {
+      margin-top: 8px;
+    }
+
+    .task-title-line {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .task-estimate {
+      font-size: 11px;
+      color: #999;
+      margin-left: 8px;
+    }
+
+    .task-item input[type="checkbox"] {
+      margin-top: 4px;
+    }
+
+    .task-main {
+      font-size: 14px;
+    }
+
+    .task-title {
+      font-weight: 600;
+    }
+
+    .task-desc {
+      font-size: 12px;
+      color: #555;
+      margin-top: 2px;
+      white-space: pre-line;
+    }
+
+
+    .task-link a {
+      font-size: 12px;
+      color: #007aff;
+      text-decoration: none;
+    }
+
+    .task-link a:hover {
+      text-decoration: underline;
+    }
+
+    .task-meta {
+      font-size: 11px;
+      color: #999;
+      margin-top: 2px;
+    }
+
+    .progress-wrap {
+      margin-top: 8px;
+      margin-bottom: 4px;
+    }
+
+    .progress-bar-bg {
+      height: 10px;
+      border-radius: 999px;
+      background: #e5e5ea;
+      overflow: hidden;
+    }
+
+    .progress-bar-fg {
+      height: 100%;
+      width: 0%;
+      background: #34c759;
+      transition: width 0.2s ease;
+    }
+
+    .progress-text {
+      font-size: 12px;
+      color: #555;
+      margin-top: 4px;
+    }
+
+    .nav-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+
+    .nav-btn {
+      border: none;
+      background: none;
+      color: #007aff;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .nav-btn:hover {
+      text-decoration: underline;
+    }
+
+    .small-text {
+      font-size: 12px;
+      color: #888;
+      margin-top: 12px;
+    }
+
+    .tags {
+      margin-top: 4px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e7f3ff;
+      color: #0b63ce;
+      margin-right: 6px;
+    }
+
+    #app-error {
+      color: #b00020;
+      font-size: 14px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1 id="page-title">学习路线引导</h1>
+  <div class="subtitle" id="page-subtitle">
+    加载配置中……
+  </div>
+
+  <div id="app"></div>
+  <div id="app-error"></div>
+
+  <div class="small-text">
+    ✅ 进度保存在本地浏览器（localStorage），只对当前设备生效。<br />
+    🔁 想重新选择路线，可以点击「返回起点」。
+  </div>
+
+  <script src="onboarding.js"></script>
+</body>
+
+</html>

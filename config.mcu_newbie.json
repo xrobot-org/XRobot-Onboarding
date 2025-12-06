@@ -1,0 +1,71 @@
+{
+    "nodes": {
+        "mcu_newbie_env": {
+            "type": "task",
+            "title": "MCU · 新手 · 环境准备",
+            "subtitle": "从零搭建 MCU 开发环境，确保能够编译并连接到开发板。",
+            "tags": [
+                "MCU",
+                "新手",
+                "环境"
+            ],
+            "tasks": [
+                {
+                    "id": "mcu_newbie_env_read_overview",
+                    "title": "【重要】LibXR / CodeGenerator / XRobot 的分层与职责",
+                    "desc": "【原始文档（可选阅读，仅作参考）】\n- LibXR: https://github.com/Jiu-xiao/libxr/blob/master/README.zh-CN.md\n- CodeGenerator: https://github.com/Jiu-xiao/LibXR_CppCodeGenerator/blob/master/README.md\n- XRobot: https://github.com/xrobot-org/XRobot/blob/XRobot2.0/README.md\n以上文档内容较完整，本任务不要求全部看懂，可在需要时作为了解细节的参考。\n\n【本任务目标】\n- 弄清 LibXR、CodeGenerator、XRobot 分别处于哪一层，各自负责什么工作。\n- 形成一条从“硬件和操作系统”到“最终应用”的整体链路，知道每一层大致处理什么问题。\n- 在后续路线中遇到相关名词时，能够迅速判断它们与当前步骤的关系。\n\n【整体图：从硬件到应用】\n可以将整个体系理解为一条自下而上的链路：\n- 最底层是具体的芯片、外设和操作系统。\n- LibXR 站在这些底层之上，把外设和系统能力封装成统一的 C++ 接口。\n- CodeGenerator 根据工程配置，生成已经接好 LibXR 的初始化代码和工程骨架。\n- XRobot 再在这一基础之上，用“模块 + 配置”的方式组合出完整应用。\n\n简要对应关系可以概括为：\n- LibXR：统一底层接口。\n- CodeGenerator：把工程配置变成基于 LibXR 的可编译工程。\n- XRobot：在 LibXR 之上统一管理和调度应用模块。\n\n【LibXR：跨平台嵌入式基础库】\nLibXR 面向需要实时性和高可靠性的嵌入式项目，提供一套跨平台的 C++ 基础库：\n- 将线程、定时器、同步原语、队列、日志、终端等常见能力封装成统一接口，尽可能隐藏芯片型号和操作系统之间的差异。\n- 支持裸机、FreeRTOS、ThreadX、Linux、仿真环境、WebAssembly 等多种运行环境，通过配置系统和驱动选项即可在不同平台之间切换。\n- 内置若干与机器人和嵌入式应用相关的通用组件，例如简单数据库、事件与消息机制、部分运动学和数学工具等，用于减少重复实现。\n\n对 MCU 新手而言，可以先把 LibXR 理解为：在不同平台上提供统一写法的一层通用底层库，上层代码主要依赖 LibXR 提供的接口，而不是直接面向寄存器或某一个特定 RTOS。\n\n【CodeGenerator：把“工程配置”变成“工程骨架”】\nCodeGenerator 负责在“工程配置”和“工程代码”之间搭建桥梁：\n- 输入是对硬件和工程的配置描述，例如哪些外设被启用、引脚如何分配、时钟如何设置、需要哪些中间件等，可以来自图形化工程配置工具或统一格式的配置文件。\n- 输出是一份已经接好 LibXR 的工程骨架，其中包含：\n  - 针对当前工程生成的初始化代码，例如对各类外设、任务和中间件进行注册和配置的 C++ 源文件；\n  - 与项目目录结构相匹配的构建配置，使编译系统可以直接使用生成的工程进行构建。\n- 这样，工程不再从完全空白的入口函数开始手动搭建，而是先自动生成一份结构清晰、可编译的基础工程，再在其上逐步补充业务逻辑。\n\n可以将 CodeGenerator 理解为：根据既定的工程配置，自动生成一套“已经接好 LibXR 的起步工程”，减少手写初始化和构建脚本的工作量。\n\n【XRobot：基于 LibXR 的模块化应用层】\nXRobot 关注的是应用层的结构和模块划分，而不是具体的寄存器细节：\n- 在 XRobot 中，“模块”可以理解为一块相对独立的功能单元，例如某个传感器、一个控制算法、一个通信通道等。每个模块都以统一的约定提供接口和说明，便于被复用。\n- “模块仓库”是集中存放这些模块代码的位置，方便在不同工程之间共享和组合。\n- “配置文件”用来描述本工程需要启用哪些模块、每个模块的参数（例如周期、阈值、名称等），以及模块中所使用的“逻辑硬件名称”（例如某一类串口、某一路 PWM 输出）。\n\nXRobot 的主要工作包括：\n- 从模块说明中了解每个模块需要的参数和所依赖的逻辑硬件资源。\n- 根据配置文件，确定在当前工程中需要创建哪些模块实例以及它们的参数设置。\n- 在应用启动阶段，基于 LibXR 提供的统一硬件接口创建模块实例，把它们挂接到统一的应用框架中，并负责后续的生命周期管理和协同运行。\n\n关键点在于：LibXR 已经对底层硬件和操作系统做了统一抽象，模块在实现时只依赖 LibXR 提供的接口，而不依赖具体芯片或具体 RTOS。XRobot 在管理模块时，同样只面向 LibXR 的统一接口，而不是直接操作底层硬件。因此，只要目标平台具备 LibXR 支持，同一套模块和配置在不同硬件平台之间就具有较好的可迁移性。\n\n【三者关系小结】\n- LibXR：向上提供统一的底层接口，为上层屏蔽芯片和操作系统差异。\n- CodeGenerator：根据工程配置生成基于 LibXR 的初始化代码和工程骨架，使工程能快速编译运行。\n- XRobot：在 LibXR 之上，通过模块和配置组织应用结构，统一管理和调度各个模块。\n\n完成本任务后，应能在脑中画出一条简化链路：硬件与操作系统 → 由 LibXR 抽象的统一接口 → 由 CodeGenerator 生成的基础工程 → 由 XRobot 管理和组合的模块化应用，并大致知道自己当前所在的步骤位于这条链路中的哪一层。",
+                    "link": "https://xrobot-org.github.io/docs/intro",
+                    "estimateMinutes": 15
+                },
+                {
+                    "id": "mcu_newbie_env_python_setup",
+                    "title": "安装 Python 工具：libxr / xrobot（可配合视频）",
+                    "desc": "【推荐视频】\n- 【无需配置！STM32 + VS Code最好的开发方式：XRobot 官方教程第0节——STM32 开发环境】\n  https://www.bilibili.com/video/BV1SHnAztE11\n该视频演示了 Python 包安装、VS Code 与插件安装，以及基础的编译和调试流程。内容基本覆盖本任务和后续几个“环境配置”相关任务，即便暂时还没有使用到任何 XR 工具和代码，也可以优先按视频完成一遍环境准备，再回到文字任务查缺补漏。\n\n【参考文档】\n- 环境配置文档：https://xrobot-org.github.io/docs/env_setup\n本任务主要对应文档中的「CodeGenerator(libxr) 与 XRobot」小节。LibXR C++ 仓库本身在这一阶段可以先不用处理，后续创建工程时会自动 clone 并集成。\n\n【本任务要完成的事情】\n- 在当前开发电脑（Windows 或 Linux）上准备好可用的 Python 3 环境。\n- 安装两个后续会频繁使用的 Python 包：libxr（CodeGenerator）和 xrobot。\n- 明确：本阶段只需要安装 Python 包，LibXR 源码仓库稍后在创建 STM32 工程时由工具自动拉取。\n\n【前置条件（概要）】\n- 电脑上已经安装了 Python 3（可通过视频或文档中的示例检查版本）。\n- 可以打开终端/命令行：\n  - Windows：PowerShell 或命令提示符（cmd）。\n  - Linux：任意终端（Terminal）。\n如果尚未安装 Python 3，建议先按照视频或参考文档完成 Python 安装，再继续本任务。\n\n【安装步骤（建议流程）】\n1. 打开终端/命令行。\n2. 参考「环境配置」文档中 “CodeGenerator(libxr) 与 XRobot” 小节（或视频中的演示），在终端中执行安装命令，为当前用户安装以下两个包：\n   - libxr（用于 CodeGenerator）。\n   - xrobot（用于 XRobot 工具链）。\n   你可以选择使用 pip，或使用 pipx 为它们单独创建环境，两种方式任选其一即可，无需同时使用。\n3. 安装完成后，可以按照文档或视频中的简单检查方式，确认这两个工具已经可以在终端中被调用。具体使用方式会在后续任务中逐步介绍，此处只需确保已正确安装。\n\n【避免的问题】\n- 避免在同一台机器上同时用 pip 和 pipx 安装同一个包（例如 libxr 或 xrobot），否则可能出现路径或版本混在一起的情况。\n- 如果之前已经尝试过多种安装方式，建议先按文档说明卸载不需要的安装，保留一种明确的方式（只用 pip 或只用 pipx）。\n\n【本节暂时不用做的事情】\n- 不需要手动 git clone LibXR 仓库。\n- 不需要在这一节配置 STM32 工程或 C++ 编译器。\n- 不需要立即理解 libxr 和 xrobot 的所有功能，只要确保它们已经安装好即可。\n\n【完成标准】\n- 电脑上有可用的 Python 3 环境，可以按文档或视频中的示例运行与 Python 相关的基本命令。\n- libxr 和 xrobot 两个 Python 包已经通过一种方式（pip 或 pipx）成功安装。\n- 理解本节的结果是：后续在创建 STM32 示例工程时，已经具备运行 CodeGenerator 和 XRobot 工具所需的基础环境。",
+                    "link": "https://xrobot-org.github.io/docs/env_setup",
+                    "estimateMinutes": 25
+                },
+                {
+                    "id": "mcu_newbie_env_board_debugger",
+                    "title": "准备并连接 STM32 开发板与调试器",
+                    "desc": "【本任务目标】\n- 选定后续示例要使用的 STM32 开发板（或自制板）。\n- 选定并确认将要使用的调试器类型（建议 ST-LINK 或 J-LINK，DAPLink 也可以）。\n- 完成开发板与调试器的物理连接，确认供电正常，为后续调试和下载固件做准备。\n\n【调试器类型概述】\n- ST-LINK：\n  常见于 STM32 官方 Nucleo / Discovery 开发板上的板载调试器，也有独立版本。\n 对 STM32 支持完善，是本路线优先推荐的选择。\n- J-LINK：\n  通用 SWD/JTAG 调试器，适用于多种 STM32 芯片。\n  适合已有 J-LINK 或需要兼容多种芯片的场景。\n- DAPLink：\n  开源的调试器方案，也可以用于 STM32 调试。\n  配置相对更麻烦，本路线后续会在需要时单独说明，这里只做类型确认。\n\n【操作步骤】\n1. 确定开发板和芯片型号：\n   - 在开发板丝印、芯片表面或板卡资料中找到完整的 STM32 型号，例如 STM32F103C8T6、STM32F407VG 等。\n   - 记录下型号，后续生成工程和选择示例时会用到。\n\n2. 确认调试器类型：\n   - 如果是官方 Nucleo / Discovery 开发板，通常自带板载 ST-LINK，默认采用板载调试器即可。\n   - 如果使用独立的 ST-LINK / J-LINK / DAPLink，请确认手边的具体型号，并准备好与开发板连接所需的线材（如杜邦线、排线等）。\n\n3. 确认 SWD 接口引脚：\n   - 在开发板上找到调试接口（常见为 SWD 接口），确认至少包含以下信号：SWDIO、SWCLK、GND、3V3（或 VCC）。\n   - 对照调试器侧引脚标记，规划好一一对应的连接方式，确保地线和电源引脚不会接反。\n\n4. 连接并上电：\n   - 将调试器与开发板按照 SWD 引脚对应关系连接好。\n   - 通过 USB 线为开发板供电：\n     - 若是带板载 ST-LINK 的开发板，一根 USB 线同时负责供电和调试连接。\n     - 若是独立调试器，确认开发板本身也已正确供电（USB、外接电源等）。\n   - 观察开发板和调试器上的电源指示灯是否点亮，确认硬件已经正常上电。\n\n5. 记录当前使用的组合：\n   - 记下“开发板型号 + 调试器类型”的组合，例如：STM32F103C8T6 + ST-LINK，或 STM32F407VG + J-LINK。\n   - 后续所有示例建议尽量使用同一套组合，避免频繁更换带来的干扰。\n\n【注意事项】\n- 接线时务必确认 GND 和电源引脚，不要把信号线接到电源或相互短接。\n- 如果使用 DAPLink，通常需要更多的配置步骤和额外软件支持，本任务只需完成硬件连接和供电确认，具体调试配置会在后续步骤或专门说明中展开。\n\n【完成标准】\n- 已明确将要使用的 STM32 开发板与芯片型号。\n- 已明确将要使用的调试器类型（ST-LINK / J-LINK / DAPLink 等）。\n- 开发板与调试器连接完毕，接入电脑后电源指示灯正常亮起，为后续调试与下载固件做好硬件准备。",
+                    "link": "",
+                    "estimateMinutes": 20
+                },
+                {
+                    "id": "mcu_newbie_env_stm32_vscode_gcc",
+                    "title": "在 Windows 上配置 STM32 + VS Code 开发环境",
+                    "desc": "【推荐视频】\n- STM32 开发环境总览（第 0 节）：\n  【无需配置！STM32 + VS Code 最好的开发方式：XRobot 官方教程第 0 节——STM32 开发环境】\n  https://www.bilibili.com/video/BV1SHnAztE11\n- 使用 DAPLink + OpenOCD 调试（后续可参考，第 0.2 节）：\n  【STM32 + VS Code】用 DAPLink + OpenOCD 调试 - XRobot 官方教程 0.2 节\n  https://www.bilibili.com/video/BV1bnnZz2ESg\n本任务不要求逐字跟随视频操作，只是推荐在实际配置时配合视频一起查看，遇到细节问题可以回到视频中对照。\n\n【参考文档】\n- STM32 环境配置文档（只需关注 STM32 + VS Code + GCC 路线）：\n  https://xrobot-org.github.io/docs/env_setup/env-setup-stm32\n\n【本任务目标】\n- 在 Windows 上安装 STM32CubeMX 和 VS Code。\n- 在 VS Code 中安装并启用 ST 官方插件 “STM32CubeIDE for Visual Studio Code”。\n- 通过 STM32CubeMX 生成一个基于 CMake + GCC 的 STM32 工程，并在 VS Code 中用插件完成工具链配置，成功编译工程。\n- 对于使用 DAPLink 的用户：了解后续需要配合 OpenOCD 使用（具体配置细节参考前述 DAPLink 教程视频），本任务只需保证基本工程能在 VS Code 中编译，通过插件拉起调试入口即可。\n\n【前提条件】\n- 操作系统为 Windows。\n- 已完成前面任务：\n  - 准备好 STM32 开发板和调试器（ST-LINK / J-LINK / DAPLink 等）。\n  - 安装好 Python 3，并通过 pip 或 pipx 安装了 libxr 和 xrobot。\n\n【步骤 1：安装基础软件】\n1. 安装 STM32CubeMX：\n   - 从 ST 官网下载 STM32CubeMX（建议 15.0 及以上），按向导完成安装。\n2. 安装 VS Code：\n   - 从 VS Code 官网下载 Windows 安装包并完成安装，保持默认选项即可。\n3. 安装 Git（如尚未安装）：\n   - 从 https://git-scm.com/ 下载并安装 Git，后续某些步骤会用到 Git。\n\n【步骤 2：安装 VS Code 插件】\n1. 打开 VS Code，进入扩展（Extensions）面板。\n2. 搜索并安装插件：\n   - 名称：STM32CubeIDE for Visual Studio Code\n   - 发布者：STMicroelectronics\n3. 安装完成后重启 VS Code，确保插件正常启用。\n\n【步骤 3：在 STM32CubeMX 中创建 CMake + GCC 工程】\n1. 打开 STM32CubeMX，创建一个新的 STM32 工程。\n2. 选择与你的开发板相匹配的 MCU 或开发板型号。\n3. 在配置阶段：\n   - 打开 SWD 调试接口，以便后续可以通过 ST-LINK / J-LINK / DAPLink 进行调试。\n   - 适当启用一个简单外设（例如一个 LED 引脚或一个串口），用于后续最基本的测试即可。\n4. 在 Project Manager 中：\n   - 将工程类型配置为 **CMake 工程**。\n   - 编译器/链接器选择 **GCC**。\n5. 选择工程名称和保存路径，生成代码，使 STM32CubeMX 在本地生成完整的 CMake 工程。\n\n【步骤 4：在 VS Code 中用插件打开并配置工程】\n1. 打开 VS Code，使用“打开文件夹”功能打开刚刚生成的 STM32 工程目录。\n2. 使用 “STM32CubeIDE for Visual Studio Code” 插件提供的入口，将该工程识别为 STM32Cube 工程。\n3. 按照插件提示完成初始配置：\n   - 插件会自动为工程配置 CMake 构建和 GCC 工具链；\n   - 如需下载额外工具链，插件会给出提示并引导完成下载，无需手动设置 PATH。\n\n【步骤 5：验证构建与基础调试入口】\n1. 在 VS Code 中，通过插件提供的“构建/编译”命令，对当前工程执行一次完整编译：\n   - 构建成功即可，暂时不关心具体功能是否正确运行。\n2. 如条件允许，可以简单测试一次调试启动：\n   - 使用 ST-LINK / J-LINK 的用户，可直接在插件中选择对应调试器类型启动调试会话；\n   - 使用 DAPLink 的用户，需要先在系统中配置好 OpenOCD 与 DAPLink（具体配置可参考前面给出的 DAPLink + OpenOCD 教程视频），然后在插件中选择合适的调试配置。\n3. 本任务只要求：工程可以成功编译，调试入口能够被插件正常拉起；后续关于中断配置、示例代码和 HardFault 处理会在专门章节中展开，不要求在本节解决。\n\n【本节暂不涉及的内容】\n- 不需要在此时集成或使用 LibXR、CodeGenerator 或 XRobot。\n- 不需要配置 Clang 或其它复杂的工具链模式，仅使用插件自动配置的 GCC 即可。\n- 不需要在本节深入 OpenOCD 配置细节，只需知道：若使用 DAPLink，后续需要配合 OpenOCD，相关操作可以参考专门视频和后续任务。\n\n【完成标准】\n- 已能在 Windows 上启动 STM32CubeMX 和 VS Code。\n- 已在 VS Code 中安装并启用 “STM32CubeIDE for Visual Studio Code” 插件。\n- 已使用 STM32CubeMX 创建一个 CMake + GCC 的 STM32 工程，并在 VS Code 中通过插件成功完成一次编译。\n- 如已连接调试器，则能通过插件拉起一次调试会话（无论是 ST-LINK / J-LINK 还是 DAPLink + OpenOCD），确认环境整体流程打通。",
+                    "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-stm32",
+                    "estimateMinutes": 40
+                },
+                {
+                    "id": "mcu_newbie_code_gen_stm32",
+                    "title": "使用 xr_cubemx_cfg 生成 STM32 初始化代码",
+                    "desc": "【参考资料】\n- 文档：STM32 代码生成 https://xrobot-org.github.io/docs/code_gen/stm32\n- 视频：[STM32 + VS Code] 自动生成 C++ 代码 | Python & libxr  - XRobot 官方教程 1.0 节\n  https://www.bilibili.com/video/BV1yUnpz6E6h\n本任务建议一边对照视频，一边按照文字步骤操作。文档中的高级选项和工具链切换内容，新手可以暂时跳过。\n\n【本任务目标】\n- 在已经可以正常编译的 STM32Cube CMake 工程中，首次运行 xr_cubemx_cfg。\n- 让工程自动集成 LibXR：生成 app_main.cpp 等初始化代码，并把 LibXR 加入 CMake 构建。\n- 大致认识生成出的关键文件，知道后续要在 app_main.cpp 的 User Code 区块中写自己的逻辑。\n\n【前置条件】\n- 已在 Windows 上完成 STM32 + VS Code 环境配置，能通过 “STM32CubeIDE for Visual Studio Code” 插件正常编译一个 STM32 CMake 工程。\n- 前面任务中已经安装好 Python 3 以及 libxr 包（CodeGenerator）。\n- 手上有一个简单的 STM32Cube 工程（CMake + GCC），并能在 VS Code 中干净编译通过。\n\n【操作步骤（简要）】\n1. 在 VS Code 中打开你的 STM32Cube 工程根目录（包含 .ioc 和 CMakeLists.txt 的那一层）。\n2. 确认工程目前可以正常编译：先用 STM32 插件执行一次构建，确保环境没有现有错误。\n3. 在工程根目录打开一个终端（VS Code 内置终端或系统终端均可），执行：\n   xr_cubemx_cfg -d .\n4. 等待命令运行完成，看到类似“All tasks completed successfully”之类的提示即表示成功。\n5. 回到 VS Code，再次构建工程：\n   - 如果构建通过，说明 LibXR 已经成功集成进当前工程。\n6. 打开 User/app_main.cpp，浏览一下生成的代码结构，找到几个关键位置：\n   - app_main() 函数本身；\n   - 注释标记的 “User Code Begin / End” 区块（后续会在这些区块中补充自己的逻辑）；\n   - 一些自动生成的外设对象（如 STM32UART、STM32SPI 等）。\n\n【xr_cubemx_cfg 做了什么（只需大致了解）】\n- 从 .ioc 文件中解析出当前工程的硬件配置，生成 .config.yaml。\n- 根据配置自动生成基于 LibXR 的初始化代码：\n  - 在 User/ 目录下生成 app_main.cpp / app_main.h。\n  - 生成 libxr_config.yaml 和 flash_map.hpp 等辅助文件。\n- 修改工程 CMake 配置，自动加入 LibXR：\n  - 在 Middlewares/Third_Party 下添加 LibXR 作为 Git 子模块；\n  - 生成 cmake/LibXR.CMake 并在 CMakeLists.txt 中插入 include。\n\n【本节暂时不需要做的事情】\n- 不需要修改 main() 或 FreeRTOS 线程入口，只需记住 app_main() 这个名字，后续任务会指导如何在入口中调用它。\n- 不需要手动编辑 .config.yaml 或 libxr_config.yaml；先以默认生成内容为主，之后有需要再调整。\n- 不需要使用 xr_stm32_toolchain_switch 或其他单独子命令，新手路线只用 xr_cubemx_cfg 即可。\n\n【完成标准】\n- 在当前 STM32 工程根目录成功运行过一次 xr_cubemx_cfg -d .。\n- 工程重新构建后仍能顺利通过编译。\n- 能在 User/app_main.cpp 中找到 app_main() 函数和 User Code Begin/End 区块，知道这些是后续编写用户逻辑的主要入口。",
+                    "link": "https://xrobot-org.github.io/docs/code_gen/stm32",
+                    "estimateMinutes": 30
+                }
+            ],
+            "next": "mcu_newbie_basics"
+        },
+        "mcu_newbie_basics": {
+            "type": "task",
+            "title": "MCU · 新手 · 工程结构与编译",
+            "subtitle": "熟悉目录结构与编译流程，能稳定编译固件。",
+            "tags": [
+                "MCU",
+                "新手",
+                "工程结构"
+            ],
+            "tasks": [
+                {
+                    "id": "mcu_newbie_basics_browse_tree",
+                    "title": "浏览目录结构与关键模块",
+                    "desc": "todo",
+                    "link": "",
+                    "estimateMinutes": 20
+                }
+            ]
+        }
+    }
+}
