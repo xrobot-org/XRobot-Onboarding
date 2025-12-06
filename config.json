@@ -4,10 +4,7 @@
   "storageKey": "xrobot_skill_tree_v1",
   "root": "start",
   "includes": [
-    "config.mcu_newbie.json",
-    "config.mcu_expert.json",
-    "config.linux_newbie.json",
-    "config.linux_expert.json"
+    "config.mcu_newbie.json"
   ],
   "nodes": {
     "start": {
@@ -24,36 +21,6 @@
           "profile": {
             "exp": "newbie",
             "platform": "mcu"
-          }
-        },
-        {
-          "id": "mcu_expert",
-          "label": "MCU · 专家",
-          "desc": "已有多年 MCU 开发经验，重点了解 XRobot 项目结构和约定。",
-          "next": "mcu_expert_env",
-          "profile": {
-            "exp": "expert",
-            "platform": "mcu"
-          }
-        },
-        {
-          "id": "linux_newbie",
-          "label": "Linux · 新手",
-          "desc": "对 Linux / C++ 还不熟悉，从基础环境到跑通第一个 Demo。",
-          "next": "linux_newbie_env",
-          "profile": {
-            "exp": "newbie",
-            "platform": "linux"
-          }
-        },
-        {
-          "id": "linux_expert",
-          "label": "Linux · 专家",
-          "desc": "熟悉 Linux / C++，重点了解 XRobot 在 PC 侧的结构与工具链。",
-          "next": "linux_expert_env",
-          "profile": {
-            "exp": "expert",
-            "platform": "linux"
           }
         }
       ]
