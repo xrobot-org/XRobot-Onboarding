@@ -123,6 +123,11 @@ function applyOverrides(node, profile) {
 function goToNode(nextNodeId, pushHistory = true) {
   if (!treeConfig || !treeConfig.nodes[nextNodeId]) {
     console.warn("目标节点不存在:", nextNodeId);
+
+    const errEl = document.getElementById("app-error");
+    if (errEl) {
+      errEl.textContent = `目标节点不存在：${nextNodeId}，请检查 config.json / includes / 子配置文件中的 nodes 定义。`;
+    }
     return;
   }
   if (pushHistory && state.currentNodeId) {

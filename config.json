@@ -4,7 +4,8 @@
   "storageKey": "xrobot_skill_tree_v1",
   "root": "start",
   "includes": [
-    "config.mcu_newbie.json"
+    "config.mcu_newbie.json",
+    "config.os_api.json"
   ],
   "nodes": {
     "start": {
@@ -21,6 +22,16 @@
           "profile": {
             "exp": "newbie",
             "platform": "mcu"
+          }
+        },
+        {
+          "id": "os_api",
+          "label": "系统层 · 操作系统 API",
+          "desc": "已经有自己的工程环境，只想学习 LibXR 统一的线程 / 同步原语 / 定时器 / 异步接口。",
+          "next": "os_api_basics",
+          "profile": {
+            "exp": "any",
+            "platform": "any"
           }
         }
       ]
