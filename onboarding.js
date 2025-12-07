@@ -146,6 +146,25 @@ function resetToRoot() {
   render();
 }
 
+function clearAllData() {
+  const key = getStorageKey();
+  try {
+    localStorage.removeItem(key);
+  } catch (e) {
+    console.warn("清除本地数据失败", e);
+  }
+
+  // 重置内存中的状态
+  state = {
+    currentNodeId: treeConfig.root,
+    completedTasks: {},
+    history: [],
+    profile: {}
+  };
+
+  render();
+}
+
 function goBack() {
   if (state.history.length === 0) {
     return;
@@ -477,11 +496,26 @@ function render() {
 
   const footer = document.createElement("div");
   footer.className = "small-text";
-  const btn = document.createElement("button");
-  btn.className = "nav-btn";
-  btn.textContent = "🏠 返回起点（重新选择路线）";
-  btn.onclick = () => resetToRoot();
-  footer.appendChild(btn);
+
+  const btnHome = document.createElement("button");
+  btnHome.className = "nav-btn";
+  btnHome.textContent = "🏠 返回起点（重新选择路线）";
+  btnHome.onclick = () => resetToRoot();
+  footer.appendChild(btnHome);
+
+  const sep = document.createTextNode("  |  ");
+  footer.appendChild(sep);
+
+  const btnClear = document.createElement("button");
+  btnClear.className = "nav-btn";
+  btnClear.textContent = "🗑 清除本地学习记录";
+  btnClear.onclick = () => {
+    if (window.confirm("确定要清除本设备上的所有学习记录吗？此操作不可恢复。")) {
+      clearAllData();
+    }
+  };
+  footer.appendChild(btnClear);
+
   app.appendChild(footer);
 }
 
