@@ -1,0 +1,24 @@
+{
+    "nodes": {
+        "linux_newbie_env": {
+            "type": "task",
+            "title": "Linux · 新手 · 环境与大图",
+            "subtitle": "从 Linux 视角理解 LibXR 在整个体系中的位置，搞清楚这一条路线在做什么。",
+            "tags": [
+                "Linux",
+                "新手",
+                "LibXR"
+            ],
+            "tasks": [
+                {
+                    "id": "linux_newbie_env_read_overview",
+                    "title": "【重要】从 Linux 视角看 LibXR 的分层与职责",
+                    "desc": "## 相关文档（可选阅读，仅作参考）\n- 环境配置总览：https://xrobot-org.github.io/docs/env_setup\n- Linux 环境配置：https://xrobot-org.github.io/docs/env_setup/env-setup-linux\n- LibXR 仓库 README（库本体说明）：https://github.com/Jiu-xiao/libxr/blob/master/README.zh-CN.md\n以上文档内容较完整，本任务不要求全部看懂，只作为需要时查细节的“说明书”。\n\n## 本任务说明\n本节只需要“看懂和想清楚”，**不需要**在电脑上执行任何命令。\n在整个 XRobot Onboarding 里，“MCU · 新手”和“Linux · 新手”是两条并列路线：\n- MCU · 新手：面向 STM32 等 MCU，用 STM32CubeMX + CodeGenerator + LibXR 搭建固件工程；\n- Linux · 新手（你现在选的这一条）：面向 Linux 上的 C++ 应用，不用 CodeGenerator，直接把 LibXR 当作一个普通 C++ 库来用；\n- 还有“系统层 · 操作系统 API”路线，专门讲 LibXR 的线程 / 同步原语 / 定时器等抽象本身。\n\n本任务的目的，是先从 **Linux 应用开发者** 的角度，把这一大堆名词放到一张清晰的图里：\n- Linux 内核和标准 C++ 各自负责什么？\n- LibXR 在 Linux 上补了哪些能力？\n- CodeGenerator / XRobot 在整个生态里干什么，和这条 Linux 线是什么关系？\n\n## 本任务目标\n- 弄清在 Linux 平台上：底层是 Linux 内核 + C++ 运行时，中间是 LibXR，上层是你的应用代码，各自大致负责什么。\n- 搞明白：在“Linux · 新手”这条路线里，只需要把 LibXR 当作 C++ 库来用，不使用 CodeGenerator，pip 安装的 libxr 包在这里并不重要。\n- 对“以后大概要装哪些类型的工具”有个模糊印象（例如编译器 / 构建工具 / 调试器 / 可选的 Python 环境），具体命令留给后面的实际配置任务。\n\n## 整体图：从 Linux 内核到 LibXR 应用\n在 Linux · 新手 路线上，可以把整个体系想象成一条自下而上的链路：\n- 最底层：硬件 + Linux 内核 + C 运行时（例如 glibc）。\n- 再上面是一套 C++ 开发工具链：\n  - 编译器（例如 g++ / clang）、\n  - 构建系统（例如 CMake + 一个具体的后端）、\n  - 调试器和常用命令行工具（例如 gdb、git 等）。\n- 再往上，是作为 **C++ 源码库** 的 LibXR：\n  - 你会在工程里把它当作一个子目录或第三方库，引入到自己的 CMake 项目中一起编译；\n  - LibXR 在 Linux 下用系统提供的线程 / 定时器 / 同步原语 / 文件等能力，封装出一套统一的 C++ 接口。\n- 最上层，是你的业务代码：命令行工具、守护进程、仿真环境或上位机程序，直接调用 LibXR 提供的线程、同步原语、定时器、日志、终端、数据库等接口。\n\n一句话概括这一条路线的定位：\n> 在 Linux 上写的是“普通 C++ 程序”，只是尽量通过 LibXR 统一使用线程 / 同步 / 定时器 / I/O / 中间件，\n> 这样以后如果需要把部分逻辑迁到 MCU 或其它平台，复用成本会更低。\n\n## Linux 环境大概需要哪些“种类”的东西\n本节只讲“种类”，**不讲具体命令和安装步骤**，那些会在下一个任务里单独展开。\n\n在 Linux · 新手 这条路线中，你大致会用到：\n- 一套 C++17 以上的编译环境：\n  - C/C++ 编译器；\n  - CMake 这类构建工具；\n  - gdb 这类调试工具；\n- 一个版本管理工具（如 git），用于拉取 LibXR 和你自己的工程代码；\n- 可选的 Python3 + pip / pipx 环境：\n  - 可以用来安装 XRobot 之类的 Python 工具包，但对“直接用 LibXR 写 C++ 程序”不是硬性前置；\n\n本节只要知道“将来会需要这些类型的工具”，不用纠结具体安装方式和命令。\n\n## 为什么这里不引入 CodeGenerator / pip 版 libxr\n- **LibXR（C++ 库本体）**：\n  - 在 Linux · 新手 路线中，你只关心它作为 C++ 源码库的那一面：把库拉进工程，用 CMake 链接，像用其他第三方 C++ 库一样使用它。\n- **CodeGenerator**：\n  - 这是一个基于 Python 的工程生成工具，主要服务于 MCU 路线（例如从 STM32CubeMX 的 .ioc 自动生成带 LibXR 的固件工程）。\n  - 在 Linux · 新手 路线中，你不需要它——这里强调的是“手写一个小而清晰的 CMake 工程，直接使用 LibXR”。\n- **pip 安装的 libxr 包**：\n  - 这是 CodeGenerator 相关的 Python 包，不是你在 Linux 上链接的那个 C++ 库本体；\n  - 因此对于“在 Linux 上用 C++ 写 LibXR 程序”来说，它并不是前置条件，可以完全忽略。\n- **xrobot Python 包**：\n  - 它负责 XRobot 相关的工程管理和模块化应用；\n  - 它可以在 Linux 上发挥作用，但属于另一条（系统层 / 模块化应用）方向，本路线只需要知道“有这么个东西”，暂时不使用。\n\n可以把这几者的关系记成一句话：\n> 这一条 Linux · 新手 路线，只需要 C++ 版 LibXR，不需要 CodeGenerator，也不依赖 pip 安装的 libxr 包；\n> 其他工具是并列路线里的角色，需要的时候再按各自路线的文档去学。\n\n## 三条路线的并列关系（简要）\n- **MCU · 新手**：\n  - 重点在“板子 + 固件工程”，会大量使用 STM32CubeMX、CodeGenerator 等；\n- **Linux · 新手**（本路线）：\n  - 重点在“Linux + C++ 工程”，直接把 LibXR 当 C++ 库用；\n- **系统层 · 操作系统 API**：\n  - 重点在“理解 LibXR 的系统抽象本身”，和具体平台无关。\n\n三条路线共用同一套概念（LibXR / CodeGenerator / XRobot），只是入口不同、关注点不同。本节的目标只是帮你把这些名字放到一张图里，并确认：你当前走的是“Linux + C++ + LibXR”这一条分支。\n\n## 本节暂时不用做的事情\n- 不需要执行任何 apt 命令或安装任何软件。\n- 不需要拉取 LibXR 代码或创建工程目录。\n- 不需要安装或使用任何 Python 包（libxr / xrobot）。\n这些都会在后续“Linux 环境实际配置 / 第一个工程”任务中逐步说明。\n\n## 完成标准\n- 你能用自己的话说出：在 Linux 上使用 LibXR，本质上是“写普通的 C++ 程序，并把 LibXR 当作一个跨平台 C++ 库来链接”。\n- 你清楚三条路线是并列的：Linux · 新手 不依赖 MCU 路线，也不依赖 CodeGenerator，只共享 LibXR 这一个核心概念。\n- 你知道：具体的 apt 安装命令、代码拉取和 CMake 配置，会在下一个任务里单独讲，这一节只负责帮你“把图画清楚”。",
+                    "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
+                    "estimateMinutes": 15
+                }
+            ],
+            "next": "linux_newbie_basics"
+        }
+    }
+}

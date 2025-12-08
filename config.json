@@ -5,6 +5,7 @@
   "root": "start",
   "includes": [
     "config.mcu_newbie.json",
+    "config.linux_newbie.json",
     "config.os_api.json"
   ],
   "nodes": {
@@ -17,7 +18,7 @@
         {
           "id": "mcu_newbie",
           "label": "MCU · 新手",
-          "desc": "几乎没有 MCU 经验，从零开始配置环境并跑通第一个固件。",
+          "desc": "没有 LibXR 经验，从零开始配置环境并在 MCU 上跑通第一个固件。",
           "next": "mcu_newbie_env",
           "profile": {
             "exp": "newbie",
@@ -25,9 +26,19 @@
           }
         },
         {
+          "id": "linux_newbie",
+          "label": "Linux · 新手",
+          "desc": "没有 LibXR 经验，从零在 Linux 上搭建环境并跑通第一个 LibXR 程序。",
+          "next": "linux_newbie_env",
+          "profile": {
+            "exp": "newbie",
+            "platform": "linux"
+          }
+        },
+        {
           "id": "os_api",
           "label": "系统层 · 操作系统 API",
-          "desc": "已经有自己的工程环境，只想学习 LibXR 统一的线程 / 同步原语 / 定时器 / 异步接口。",
+          "desc": "已经有自己的工程环境，只想学习 LibXR 提供的统一线程 / 同步原语 / 定时器 / 异步 I/O 接口。",
           "next": "os_api_basics",
           "profile": {
             "exp": "any",
