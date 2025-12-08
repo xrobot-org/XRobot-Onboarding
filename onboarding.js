@@ -5,6 +5,15 @@ const CONFIG_URL = "config.json";
 let treeConfig = null;
 let state = null;
 
+function md(text) {
+  if (!text) return "";
+  if (window.marked) {
+    return window.marked.parse(text);
+  }
+  return String(text);
+}
+
+
 async function loadConfig() {
   // 1. 加载主配置
   const res = await fetch(CONFIG_URL);
@@ -136,7 +145,10 @@ function goToNode(nextNodeId, pushHistory = true) {
   state.currentNodeId = nextNodeId;
   saveState();
   render();
+
+  window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
 }
+
 
 function resetToRoot() {
   state.history = [];
@@ -263,9 +275,10 @@ function renderChoiceNode(node) {
     if (opt.desc) {
       const d = document.createElement("div");
       d.className = "choice-desc";
-      d.textContent = opt.desc;
+      d.innerHTML = md(opt.desc);
       main.appendChild(d);
     }
+
 
     btn.appendChild(main);
 
@@ -407,9 +420,10 @@ function renderTaskNode(nodeRaw) {
     if (t.desc) {
       const desc = document.createElement("div");
       desc.className = "task-desc";
-      desc.textContent = t.desc;
+      desc.innerHTML = md(t.desc);
       main.appendChild(desc);
     }
+
 
     if (t.link) {
       const link = document.createElement("div");
