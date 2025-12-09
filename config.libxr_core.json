@@ -1,0 +1,23 @@
+{
+    "nodes": {
+        "libxr_core_intro": {
+            "type": "task",
+            "title": "LibXR · 核心组件总览",
+            "subtitle": "了解 LibXR 框架的核心模块，为后续所有系统层代码打基础。",
+            "tags": [
+                "LibXR",
+                "核心组件",
+                "基础库"
+            ],
+            "tasks": [
+                {
+                    "id": "libxr_core_read_core_doc",
+                    "title": "阅读“核心组件”章节并建立整体模块图",
+                    "descMd": "md/libxr_core/libxr_core_read_core_doc.md",
+                    "link": "https://xrobot-org.github.io/docs/basic_coding/core",
+                    "estimateMinutes": 25
+                }
+            ]
+        }
+    }
+}

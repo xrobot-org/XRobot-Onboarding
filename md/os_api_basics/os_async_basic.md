@@ -199,6 +199,6 @@ int main()
 
 ## 相关文档
 - [ASync（异步任务）文档](https://xrobot-org.github.io/docs/basic_coding/system/async)
-- [Callback（通用回调）文档](https://xrobot-org.github.io/docs/basic_coding/system/callback)
+- [Callback（通用回调）文档](https://xrobot-org.github.io/docs/basic_coding/core/core-callback)
 - [Semaphore（信号量）文档](https://xrobot-org.github.io/docs/basic_coding/system/semaphore)
 - [Thread（线程）文档](https://xrobot-org.github.io/docs/basic_coding/system/thread)

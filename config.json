@@ -6,7 +6,8 @@
   "includes": [
     "config.mcu_newbie.json",
     "config.linux_newbie.json",
-    "config.os_api.json"
+    "config.os_api.json",
+    "config.libxr_core.json"
   ],
   "nodes": {
     "start": {
@@ -40,6 +41,16 @@
           "label": "系统层 · 操作系统 API",
           "desc": "已经有自己的工程环境，只想学习 LibXR 提供的统一线程 / 同步原语 / 定时器 / 异步 I/O 接口。",
           "next": "os_api_basics",
+          "profile": {
+            "exp": "any",
+            "platform": "any"
+          }
+        },
+        {
+          "id": "libxr_core",
+          "label": "LibXR · 核心组件",
+          "desc": "已经具备基本 OS / 线程概念，只想集中了解 LibXR 的基础数据类型、错误处理、时间与通用 I/O 等核心模块。",
+          "next": "libxr_core_intro",
           "profile": {
             "exp": "any",
             "platform": "any"

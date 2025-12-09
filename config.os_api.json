@@ -30,7 +30,7 @@
           "id": "os_mutex_basic",
           "title": "互斥锁入门：用 LibXR::Mutex 保护共享计数器",
           "link": "https://xrobot-org.github.io/docs/basic_coding/system/mutex",
-          "estimateMinutes": 30,
+          "estimateMinutes": 20,
           "descMd": "md/os_api_basics/os_mutex_basic.md"
         },
         {
@@ -51,10 +51,11 @@
           "id": "os_async_basic",
           "title": "异步任务入门：用 LibXR::ASync 把耗时操作丢到后台跑",
           "link": "https://xrobot-org.github.io/docs/basic_coding/system/async",
-          "estimateMinutes": 30,
+          "estimateMinutes": 20,
           "descMd": "md/os_api_basics/os_async_basic.md"
         }
-      ]
+      ],
+      "next": "libxr_core_intro"
     }
   }
 }

@@ -114,7 +114,7 @@
         {
           "id": "mcu_newbie_periph_overview",
           "title": "其他外设与基础中间件：能力与文档入口",
-          "link": "https://xrobot-org.github.io/docs",
+          "link": "https://xrobot-org.github.io/docs/intro",
           "estimateMinutes": 60,
           "descMd": "md/mcu_newbie_periph/mcu_newbie_periph_overview.md"
         },

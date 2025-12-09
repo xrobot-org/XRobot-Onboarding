@@ -28,14 +28,14 @@
           "id": "linux_newbie_basics_hello_cmake",
           "title": "第一个 LibXR CMake 工程：Hello LibXR（Linux）",
           "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
-          "estimateMinutes": 30,
+          "estimateMinutes": 20,
           "descMd": "md/linux_newbie_env/linux_newbie_basics_hello_cmake.md"
         },
         {
           "id": "linux_newbie_basics_debug",
           "title": "在 VS Code 中调试第一个 LibXR 程序",
           "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
-          "estimateMinutes": 25,
+          "estimateMinutes": 15,
           "descMd": "md/linux_newbie_env/linux_newbie_basics_debug.md"
         },
         {
@@ -63,7 +63,7 @@
         {
           "id": "linux_newbie_basics_fake_led",
           "title": "用一个布尔量当作“LED”：LibXR 上的第一个循环",
-          "link": "https://xrobot-org.github.io/docs",
+          "link": "https://xrobot-org.github.io/docs/intro",
           "estimateMinutes": 15,
           "descMd": "md/linux_newbie_basics/linux_newbie_basics_fake_led.md"
         },
@@ -77,7 +77,7 @@
         {
           "id": "linux_newbie_basics_review",
           "title": "小结：从简单循环到终端的一条线",
-          "link": "https://xrobot-org.github.io/docs",
+          "link": "https://xrobot-org.github.io/docs/intro",
           "estimateMinutes": 10,
           "descMd": "md/linux_newbie_basics/linux_newbie_basics_review.md"
         }
