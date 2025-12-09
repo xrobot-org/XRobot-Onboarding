@@ -1,146 +1,146 @@
 {
-    "nodes": {
-        "mcu_newbie_env": {
-            "type": "task",
-            "title": "MCU · 新手 · 环境准备",
-            "subtitle": "从零搭建 MCU 开发环境，确保能够编译并连接到开发板。",
-            "tags": [
-                "MCU",
-                "新手",
-                "环境"
-            ],
-            "tasks": [
-                {
-                    "id": "mcu_newbie_env_read_overview",
-                    "title": "【重要】LibXR / CodeGenerator / XRobot 的分层与职责",
-                    "desc": "## 原始文档（可选阅读，仅作参考）\n- LibXR: https://github.com/Jiu-xiao/libxr/blob/master/README.zh-CN.md\n- CodeGenerator: https://github.com/Jiu-xiao/LibXR_CppCodeGenerator/blob/master/README.md\n- XRobot: https://github.com/xrobot-org/XRobot/blob/XRobot2.0/README.md\n以上文档内容较完整，本任务不要求全部看懂，只作为需要时查细节的“说明书”。\n## 本任务说明\n本节只需要阅读和理解，不需要在电脑上实际操作。目标是先在脑中画出一张“大图”，后面的所有步骤都在这张图上找得到位置。\n## 本任务目标\n- 弄清 LibXR、CodeGenerator、XRobot 分别处于哪一层，各自负责什么工作。\n- 形成一条从“硬件和操作系统”到“最终应用”的完整链路，知道每一层大致处理什么问题。\n- 在后续路线中遇到相关名词时，能迅速判断：现在正在和哪一层打交道。\n## 整体图：从硬件到应用的一条链路\n可以把整个体系想象成一条自下而上的链路：\n- 最底层是具体的芯片、外设和操作系统。\n- LibXR 站在这些底层之上，把外设和系统能力封装成统一的 C++ 接口。\n- CodeGenerator 根据工程配置，生成已经接好 LibXR 的初始化代码和工程骨架。\n- XRobot 再在这一基础上，用“模块 + 配置”的方式组合出完整应用。\n可以用三句话概括：\n- LibXR：统一底层接口。\n- CodeGenerator：把工程配置变成基于 LibXR 的可编译工程。\n- XRobot：在 LibXR 之上统一管理和调度应用模块。\n## LibXR：跨平台嵌入式基础库\nLibXR 面向需要实时性和高可靠性的嵌入式项目，提供一套跨平台的 C++ 基础库：\n- 将线程、定时器、同步原语、队列、日志、终端等常见能力封装成统一接口，尽量隐藏不同芯片和操作系统之间的差异。\n- 支持裸机、FreeRTOS、ThreadX、Linux、仿真环境、WebAssembly 等多种运行环境，通过配置选项即可在不同平台之间切换。\n- 内置若干与机器人和嵌入式应用相关的通用组件，例如简单数据库、事件与消息机制、部分运动学和数学工具等，用于减少重复实现。\n对 MCU 新手而言，可以先把 LibXR 理解为：\n> 在不同平台上提供统一写法的一层通用底层库，上层代码主要依赖 LibXR 提供的接口，而不是直接面向寄存器或某一个特定 RTOS。\n## CodeGenerator：把“工程配置”变成“工程骨架”\nCodeGenerator 负责在“工程配置”和“工程代码”之间搭建桥梁：\n- 输入：对硬件和工程的配置描述，例如哪些外设被启用、引脚如何分配、时钟如何设置、是否启用 RTOS 等，可以来自图形化配置工具（如 STM32CubeMX）或统一格式的配置文件。\n- 输出：一份已经接好 LibXR 的工程骨架，其中包含：\n  - 针对当前工程生成的初始化代码，例如对各类外设、任务和中间件进行注册和配置的 C++ 源文件。\n  - 与项目目录结构相匹配的构建配置，使编译系统可以直接使用生成的工程进行构建。\n这样，工程不再从完全空白的入口函数开始手动搭建，而是：\n> 先自动生成一份结构清晰、可编译的基础工程，再在其上逐步补充业务逻辑。\n可以将 CodeGenerator 理解为：根据既定的工程配置，自动生成一套“已经接好 LibXR 的起步工程”，减少手写初始化和构建脚本的工作量。\n## XRobot：基于 LibXR 的模块化应用层\nXRobot 关注的是应用层的结构和模块划分，而不是具体寄存器细节：\n- 在 XRobot 中，“模块”可以理解为一块相对独立的功能单元，例如某个传感器、一个控制算法、一个通信通道等。每个模块都按统一约定提供接口和说明，便于被复用和组合。\n- “模块仓库”是集中存放这些模块代码的位置，方便在不同工程之间共享。\n- “配置文件”用来描述本工程需要启用哪些模块、每个模块的参数（例如周期、阈值、名称等），以及模块中所使用的“逻辑硬件名称”（例如某一类串口、某一路 PWM 输出）。\nXRobot 的主要工作包括：\n- 从模块说明中了解每个模块需要的参数和所依赖的逻辑硬件资源。\n- 根据配置文件，确定在当前工程中需要创建哪些模块实例以及它们的参数设置。\n- 在应用启动阶段，基于 LibXR 提供的统一硬件接口创建模块实例，将它们挂接到统一的应用框架中，并负责后续的生命周期管理和协同运行。\n关键点在于：\n> LibXR 已经对底层硬件和操作系统做了统一抽象，模块在实现时只依赖 LibXR 提供的接口，而不依赖具体芯片或具体 RTOS；XRobot 在管理模块时，同样只面向 LibXR 的统一接口，而不是直接操作底层硬件。\n因此，只要目标平台具备 LibXR 支持，同一套模块和配置在不同硬件平台之间就具有较好的可迁移性。\n## 三者关系小结\n- LibXR：向上提供统一的底层接口，为上层屏蔽芯片和操作系统差异。\n- CodeGenerator：根据工程配置生成基于 LibXR 的初始化代码和工程骨架，使工程能快速编译运行。\n- XRobot：在 LibXR 之上，通过模块和配置组织应用结构，统一管理和调度各个模块。\n完成本任务后，应能在脑中画出一条简化链路：\n> 硬件与操作系统 → 由 LibXR 抽象的统一接口 → 由 CodeGenerator 生成的基础工程 → 由 XRobot 管理和组合的模块化应用\n并大致知道：自己当前所在的步骤位于这条链路中的哪一层。",
-                    "link": "https://xrobot-org.github.io/docs/intro",
-                    "estimateMinutes": 15
-                },
-                {
-                    "id": "mcu_newbie_env_python_setup",
-                    "title": "安装 Python 工具：libxr / xrobot（可配合视频）",
-                    "desc": "## 推荐视频\n- 【无需配置！STM32 + VS Code 最好的开发方式：XRobot 官方教程第 0 节——STM32 开发环境】\n  https://www.bilibili.com/video/BV1SHnAztE11\n视频中包含 Python 包安装、VS Code 与插件安装，以及最基本的一次编译和调试流程。本任务只关注其中“安装 Python 与 libxr / xrobot”这一部分，其他步骤会在后续任务中分别展开。\n## 参考文档\n- 环境配置文档：https://xrobot-org.github.io/docs/env_setup\n本任务主要对应文档中的「CodeGenerator(libxr) 与 XRobot」小节。LibXR 的 C++ 仓库在这一阶段不用手动处理，后续在创建 STM32 工程时会由工具自动拉取。\n## 本任务要完成的事情\n- 在当前开发电脑（Windows 或 Linux）上准备好可用的 Python 3 环境。\n- 安装两个后续会频繁使用的 Python 包：libxr（CodeGenerator 工具链）和 xrobot。\n- 建立一个清晰印象：此时只是在“准备脚本工具”，真正的 STM32 工程和 LibXR 源码会在后面步骤中自动生成或拉取。\n## 前置条件（概要）\n- 电脑上已经安装了 Python 3（可以参考视频或文档中的示例检查版本）。\n- 能够打开终端/命令行：\n  - Windows：PowerShell 或命令提示符（cmd）。\n  - Linux：任意终端（Terminal）。\n如果尚未安装 Python 3，建议先按照视频或参考文档完成 Python 安装，再继续本任务。\n## 安装步骤（建议流程）\n1. 打开终端/命令行。\n2. 参考环境配置文档中 “CodeGenerator(libxr) 与 XRobot” 小节（或视频中的演示），在终端中执行安装命令，为当前用户安装以下两个包：\n   - libxr（用于 CodeGenerator 工具链）。\n   - xrobot（用于 XRobot 工具链）。\n   具体命令以文档和视频中给出的为准，你可以选择使用 pip，或使用 pipx 为它们创建独立环境，两种方式任选其一即可，无需同时使用。\n3. 安装完成后，可以按照文档或视频中的简单检查方式，确认这两个工具已经可以在终端中被调用。后续任务会具体说明如何使用它们，目前只需保证“已成功安装”。\n## 避免的问题\n- 避免在同一台机器上同时用 pip 和 pipx 安装同一个包（例如 libxr 或 xrobot），否则可能出现路径、版本混在一起的情况。\n- 如果之前已经尝试过多种安装方式，建议先按文档说明卸载不需要的安装，只保留一种明确的方式（只用 pip 或只用 pipx）。\n## 本节暂时不用做的事情\n- 不需要手动 git clone LibXR 仓库。\n- 不需要在这一节配置 STM32 工程或 C++ 编译器。\n- 不需要立即理解 libxr 和 xrobot 的全部功能，只要确认它们安装成功即可。\n## 完成标准\n- 电脑上有可用的 Python 3 环境，可以按文档或视频中的示例运行与 Python 相关的基本命令。\n- libxr 和 xrobot 两个 Python 包已经通过一种方式（pip 或 pipx）成功安装。\n- 理解本节的结果是：后续在创建 STM32 示例工程时，已经具备运行 CodeGenerator 和 XRobot 工具所需的基础环境。",
-                    "link": "https://xrobot-org.github.io/docs/env_setup",
-                    "estimateMinutes": 10
-                },
-                {
-                    "id": "mcu_newbie_env_board_debugger",
-                    "title": "准备并连接 STM32 开发板与调试器",
-                    "desc": "## 本任务目标\n- 选定后续示例要使用的 STM32 开发板（或自制板）。\n- 选定并确认将要使用的调试器类型（建议 ST-LINK 或 J-LINK，DAPLink 也可以）。\n- 完成开发板与调试器的物理连接，确认供电正常，为后续调试和下载固件做准备。\n## 调试器类型概述\n- ST-LINK：\n  常见于 STM32 官方 Nucleo / Discovery 开发板上的板载调试器，也有独立版本。对 STM32 支持完善，是本路线优先推荐的选择。\n- J-LINK：\n  通用 SWD/JTAG 调试器，适用于多种 STM32 芯片，适合已经具备 J-LINK 或需要兼容多种芯片的场景。\n- DAPLink：\n  开源调试器方案，也可以用于 STM32 调试，但配置相对更麻烦。本路线在需要时会单独说明，这里只做类型确认和连接。\n## 操作步骤\n1. 确定开发板和芯片型号：\n   - 在开发板丝印、芯片表面或板卡资料中找到完整的 STM32 型号，例如 STM32F103C8T6、STM32F407VG 等。\n   - 记录下型号，后续生成工程和选择示例时会用到。\n2. 确认调试器类型：\n   - 如果是官方 Nucleo / Discovery 开发板，通常自带板载 ST-LINK，默认采用板载调试器即可。\n   - 如果使用独立的 ST-LINK / J-LINK / DAPLink，请确认手边的具体型号，并准备好与开发板连接所需的线材（如杜邦线、排线等）。\n3. 确认 SWD 接口引脚：\n   - 在开发板上找到调试接口（常见为 SWD 接口），确认至少包含以下信号：SWDIO、SWCLK、GND、3V3（或 VCC）。\n   - 对照调试器侧引脚标记，规划好一一对应的连接方式，确保地线和电源引脚不会接反。\n4. 连接并上电：\n   - 将调试器与开发板按照 SWD 引脚对应关系连接好。\n   - 通过 USB 线为开发板供电：\n     - 若是带板载 ST-LINK 的开发板，一根 USB 线同时负责供电和调试连接。\n     - 若是独立调试器，确认开发板本身也已正确供电（USB、外接电源等）。\n   - 观察开发板和调试器上的电源指示灯是否点亮，确认硬件已经正常上电。\n5. 记录当前使用的组合：\n   - 记下“开发板型号 + 调试器类型”的组合，例如：STM32F103C8T6 + ST-LINK，或 STM32F407VG + J-LINK。\n   - 后续所有示例建议尽量使用同一套组合，避免频繁更换带来的干扰。\n## 注意事项\n- 接线时务必确认 GND 和电源引脚，不要把信号线接到电源或相互短接。\n- 如果使用 DAPLink，后续在软件侧通常需要配合 OpenOCD 等工具，本任务阶段只需完成硬件连接和供电确认，具体调试配置将放在后续步骤或专门章节中说明。\n## 完成标准\n- 已明确将要使用的 STM32 开发板与芯片型号。\n- 已明确将要使用的调试器类型（ST-LINK / J-LINK / DAPLink 等）。\n- 开发板与调试器连接完毕，接入电脑后电源指示灯正常亮起，为后续调试与下载固件做好硬件准备。",
-                    "link": "",
-                    "estimateMinutes": 10
-                },
-                {
-                    "id": "mcu_newbie_env_stm32_vscode_gcc",
-                    "title": "在 Windows 上配置 STM32 + VS Code 开发环境",
-                    "desc": "## 推荐视频\n- STM32 开发环境总览（第 0 节）：\n  【无需配置！STM32 + VS Code 最好的开发方式：XRobot 官方教程第 0 节——STM32 开发环境】\n  https://www.bilibili.com/video/BV1SHnAztE11\n- 使用 DAPLink + OpenOCD 调试（后续可参考，第 0.2 节）：\n  【STM32 + VS Code】用 DAPLink + OpenOCD 调试 - XRobot 官方教程 0.2 节\n  https://www.bilibili.com/video/BV1bnnZz2ESg\n本任务不要求逐字跟随视频操作，只是推荐在实际配置时配合视频一起查看，遇到细节问题可以回到视频中对照。\n## 参考文档\n- STM32 环境配置文档（只需关注 STM32 + VS Code + GCC 路线）：\n  https://xrobot-org.github.io/docs/env_setup/env-setup-stm32\n## 本任务目标\n- 在 Windows 上安装 STM32CubeMX 和 VS Code。\n- 在 VS Code 中安装并启用 ST 官方插件 “STM32CubeIDE for Visual Studio Code”。\n- 使用 STM32CubeMX 生成一个基于 CMake + GCC 的 STM32 工程，并在 VS Code 中用插件完成工具链配置，成功编译工程。\n- 对于使用 DAPLink 的用户：了解后续需要配合 OpenOCD 使用，本任务只需保证基本工程能在 VS Code 中编译，通过插件拉起调试入口即可。\n## 前提条件\n- 操作系统为 Windows。\n- 已完成前面任务：\n  - 准备好 STM32 开发板和调试器（ST-LINK / J-LINK / DAPLink 等）。\n  - 安装好 Python 3，并通过 pip 或 pipx 安装了 libxr 和 xrobot。\n## 步骤 1：安装基础软件\n1. 安装 STM32CubeMX：\n   - 从 ST 官网下载 STM32CubeMX，按向导完成安装。\n2. 安装 VS Code：\n   - 从 VS Code 官网下载 Windows 安装包并完成安装，保持默认选项即可。\n3. 安装 Git（如尚未安装）：\n   - 从 https://git-scm.com/ 下载并安装 Git，后续某些步骤会用到 Git。\n## 步骤 2：安装 VS Code 插件\n1. 打开 VS Code，进入扩展（Extensions）面板。\n2. 搜索并安装插件：\n   - 名称：STM32CubeIDE for Visual Studio Code\n   - 发布者：STMicroelectronics\n3. 安装完成后重启 VS Code，确保插件正常启用。\n## 步骤 3：在 STM32CubeMX 中创建 CMake + GCC 工程\n1. 打开 STM32CubeMX，创建一个新的 STM32 工程。\n2. 选择与你的开发板相匹配的 MCU 或开发板型号。\n3. 在配置阶段：\n   - 打开 SWD 调试接口，以便后续可以通过 ST-LINK / J-LINK / DAPLink 进行调试。\n   - 适当启用一个简单外设（例如一个 LED 引脚或一个串口），用于后续最基本的测试即可。\n4. 在 Project Manager 中：\n   - 将工程类型配置为 CMake 工程。\n   - 编译器/链接器选择 GCC。\n5. 选择工程名称和保存路径，生成代码，使 STM32CubeMX 在本地生成完整的 CMake 工程。\n## 步骤 4：在 VS Code 中用插件打开并配置工程\n1. 打开 VS Code，使用“打开文件夹”功能打开刚刚生成的 STM32 工程目录。\n2. 使用 “STM32CubeIDE for Visual Studio Code” 插件提供的入口，将该工程识别为 STM32Cube 工程。\n3. 按照插件提示完成初始配置：\n   - 插件会自动为工程配置 CMake 构建和 GCC 工具链。\n   - 如需下载额外工具链，插件会给出提示并引导完成下载，无需手动设置 PATH。\n## 步骤 5：验证构建与基础调试入口\n1. 在 VS Code 中，通过插件提供的“构建/编译”命令，对当前工程执行一次完整编译：\n   - 构建成功即可，暂时不关心具体功能是否已经正常工作。\n2. 如条件允许，可以简单测试一次调试启动（按下 F5）：\n   - 使用 ST-LINK / J-LINK 的用户，可直接在插件中选择对应调试器类型启动调试会话。\n   - 使用 DAPLink 的用户，需要先在系统中配置好 OpenOCD 与 DAPLink（具体配置可参考前述 DAPLink + OpenOCD 教程视频），然后在插件中选择合适的调试配置。\n3. 本任务只要求：工程可以成功编译，调试入口能够被插件正常拉起。后续关于中断配置、示例代码和 HardFault 处理会在专门章节中展开，不要求在本节解决。\n## 本节暂不涉及的内容\n- 不需要在此时集成或使用 LibXR、CodeGenerator 或 XRobot。\n- 不需要配置 Clang 或其它复杂的工具链模式，仅使用插件自动配置的 GCC 即可。\n- 不需要在本节深入 OpenOCD 配置细节，只需知道：若使用 DAPLink，后续需要配合 OpenOCD，相关操作可以参考专门视频和后续任务。\n## 完成标准\n- 已能在 Windows 上启动 STM32CubeMX 和 VS Code。\n- 已在 VS Code 中安装并启用 “STM32CubeIDE for Visual Studio Code” 插件。\n- 已使用 STM32CubeMX 创建一个 CMake + GCC 的 STM32 工程，并在 VS Code 中通过插件成功完成一次编译。\n- 如已连接调试器，则能通过插件拉起一次调试会话（无论是 ST-LINK / J-LINK 还是 DAPLink + OpenOCD），确认环境整体流程打通。",
-                    "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-stm32",
-                    "estimateMinutes": 20
-                },
-                {
-                    "id": "mcu_newbie_code_gen_stm32",
-                    "title": "使用 xr_cubemx_cfg 生成 STM32 初始化代码",
-                    "desc": "## 参考资料\n- 文档：STM32 代码生成 https://xrobot-org.github.io/docs/code_gen/stm32\n- 视频：[STM32 + VS Code] 自动生成 C++ 代码 | Python & libxr  - XRobot 官方教程 1.0 节\n  https://www.bilibili.com/video/BV1yUnpz6E6h\n本任务建议一边对照视频，一边按照文字步骤操作。文档中的高级选项和工具链切换内容，新手可以暂时跳过。\n## 本任务目标\n- 在已经可以正常编译的 STM32Cube CMake 工程中，首次运行 xr_cubemx_cfg。\n- 让工程自动集成 LibXR：生成 app_main.cpp 等初始化代码，并把 LibXR 加入 CMake 构建。\n- 大致认识生成出的关键文件，知道后续要在 app_main.cpp 的 User Code 区块中写自己的逻辑。\n## 前置条件\n- 已在 Windows 上完成 STM32 + VS Code 环境配置，能通过 “STM32CubeIDE for Visual Studio Code” 插件正常编译一个 STM32 CMake 工程。\n- 前面任务中已经安装好 Python 3 以及 libxr 包（CodeGenerator）。\n- 手上有一个简单的 STM32Cube 工程（CMake + GCC），并能在 VS Code 中干净编译通过。\n## 操作步骤（简要）\n1. 在 VS Code 中打开你的 STM32Cube 工程根目录（包含 .ioc 和 CMakeLists.txt 的那一层）。\n2. 确认工程目前可以正常编译：先用 STM32 插件执行一次构建，确保环境没有现有错误。\n3. 在工程根目录打开一个终端（VS Code 内置终端或系统终端均可），执行：\n   xr_cubemx_cfg -d .\n4. 等待命令运行完成，出现类似“All tasks completed successfully”之类的提示，即表示生成流程完成。\n5. 回到 VS Code，再次构建工程：\n   - 如果构建通过，说明 LibXR 已经成功集成进当前工程。\n6. 打开 User/app_main.cpp，浏览生成的代码结构，重点找到几个位置：\n   - app_main() 函数本身。\n   - 注释标记的 “User Code Begin / End” 区块（后续会在这些区块中补充自己的逻辑）。\n   - 若干自动生成的外设对象（如 STM32UART、STM32SPI 等）。\n## xr_cubemx_cfg 做了什么（只需大致了解）\n- 从 .ioc 文件中解析出当前工程的硬件配置，生成 .config.yaml。\n- 根据配置自动生成基于 LibXR 的初始化代码：\n  - 在 User/ 目录下生成 app_main.cpp / app_main.h。\n  - 生成 libxr_config.yaml 和 flash_map.hpp 等辅助文件。\n- 修改工程 CMake 配置，自动加入 LibXR：\n  - 在 Middlewares/Third_Party 下添加 LibXR 作为 Git 子模块（如果尚未存在）。\n  - 生成 cmake/LibXR.CMake 并在 CMakeLists.txt 中插入 include。\n## 本节暂时不需要做的事情\n- 不需要修改 main() 或 FreeRTOS 线程入口，只需记住 app_main() 这个名字，后续任务会指导如何在入口中调用它。\n- 不需要手动编辑 .config.yaml 或 libxr_config.yaml；先以默认生成内容为主，之后有需要再调整。\n- 不需要单独使用 xr_stm32_toolchain_switch 等子命令，新手路线只用 xr_cubemx_cfg 即可。\n## 完成标准\n- 在当前 STM32 工程根目录成功运行过一次 xr_cubemx_cfg -d .。\n- 工程重新构建后仍能顺利通过编译。\n- 能在 User/app_main.cpp 中找到 app_main() 函数和 User Code Begin / End 区块，知道这些是后续编写用户逻辑的主要入口。",
-                    "link": "https://xrobot-org.github.io/docs/code_gen/stm32",
-                    "estimateMinutes": 15
-                }
-            ],
-            "next": "mcu_newbie_basics"
+  "nodes": {
+    "mcu_newbie_env": {
+      "type": "task",
+      "title": "MCU · 新手 · 环境准备",
+      "subtitle": "从零搭建 MCU 开发环境，确保能够编译并连接到开发板。",
+      "tags": [
+        "MCU",
+        "新手",
+        "环境"
+      ],
+      "tasks": [
+        {
+          "id": "mcu_newbie_env_read_overview",
+          "title": "【重要】LibXR / CodeGenerator / XRobot 的分层与职责",
+          "link": "https://xrobot-org.github.io/docs/intro",
+          "estimateMinutes": 15,
+          "descMd": "md/mcu_newbie_env/mcu_newbie_env_read_overview.md"
         },
-        "mcu_newbie_basics": {
-            "type": "task",
-            "title": "MCU · 新手 · 第一个 LibXR 工程（点灯 + 串口）",
-            "subtitle": "从自动生成工程，到真正点亮板子、打出第一行串口日志",
-            "tags": [
-                "MCU",
-                "新手",
-                "LibXR",
-                "STM32"
-            ],
-            "tasks": [
-                {
-                    "id": "mcu_newbie_basics_read_app_main",
-                    "title": "认识生成后的 LibXR 工程并接入 app_main()",
-                    "desc": "## 本任务目标\n- 了解运行 CodeGenerator 之后，STM32 工程的整体结构发生了哪些变化。\n- 找到 app_main() 函数，弄清它大致负责哪些初始化工作、有哪些预留给用户的代码区块。\n- 在合适的位置主动接入 app_main()：在 main()（或 FreeRTOS 默认任务入口）中包含 app_main.h 并调用 app_main()，形成完整的启动链路。\n## 前置条件\n- 已经有一个可以在 VS Code 中正常编译的 STM32 CMake 工程。\n- 已经在该工程上运行过一次 LibXR 的代码生成流程（例如使用 xr_cubemx_cfg），并确认工程仍然可以编译通过。\n- 工程中已经出现 User/app_main.cpp 和 app_main.h 等文件。\n## 步骤 1：整体看一眼工程结构\n1. 在 VS Code 中打开 STM32 工程根目录。\n2. 在资源管理器中浏览目录结构，注意区分几类目录：\n   - Core/ 与 Drivers/：主要为 STM32CubeMX 生成的启动代码、HAL 驱动等。\n   - Middlewares/Third_Party/LibXR（或类似路径）：存放 LibXR 源码或子模块。\n   - User/：放置与当前工程相关的用户代码和 LibXR 生成代码，通常包含 app_main.cpp、app_main.h、libxr_config.yaml 等文件。\n3. 这一阶段只需要大致分清：哪些是原始 CubeMX 工程，哪些是 LibXR 引入的新增部分，以及 app_main.cpp / app_main.h 所在的位置。\n## 步骤 2：打开 app_main.cpp，认识 LibXR 初始化代码\n1. 打开 User/app_main.cpp（路径以实际工程为准）。\n2. 在文件中找到 app_main() 函数：\n   - 通常以 C 接口形式提供（可看到 extern \"C\" 包裹的函数定义），由 C 语言侧的启动代码调用。\n   - 函数内部一般包括：\n     - 平台初始化（例如时间基准、基础设施初始化等）。\n     - 按当前 .ioc 配置创建各类外设封装对象（如 STM32GPIO、STM32UART、STM32SPI 等）。\n     - 进入主循环或调用后续逻辑。\n3. 观察文件顶部和中部的结构：\n   - 可以看到包含 libxr.hpp 以及若干 stm32_xxx.hpp 头文件，这是 LibXR 针对 STM32 的封装入口。\n   - 中间通常会有一些静态缓冲区和外设相关的对象定义，这些都是 CodeGenerator 根据 .ioc 自动生成的初始化部分。\n4. 注意文件中用注释标出的“User Code Begin / User Code End”区块：\n   - 这些区块是后续编写自定义逻辑的主要位置。\n   - 重新运行代码生成工具时，区块外的内容可能会更新，而区块内的代码会被保留。\n## 步骤 3：在工程入口中接入 app_main()\n1. 打开 Core/ 目录下的 main.c 文件：\n   - 在裸机工程中，可以在 main() 函数中看到 HAL_Init()、SystemClock_Config() 以及若干初始化调用。\n   - 在使用 FreeRTOS 的工程中，main() 中会启动调度器，默认任务入口函数（例如 StartDefaultTask）是应用层主要入口。\n2. 在合适位置包含 app_main.h：\n   - 在 main.c 顶部其他头文件附近，加入一行：\n     - #include \"app_main.h\"\n3. 选择调用 app_main() 的位置：\n   - 裸机工程：\n     - 在 main() 中，完成 HAL_Init() 和时钟等基础配置后，调用 app_main();\n     - 调用位置应在你希望“正式开始应用逻辑”的地方。\n   - FreeRTOS 工程：\n     - 在默认任务（例如 StartDefaultTask）的函数体中，选择合适位置调用 app_main();\n     - 确保调用时调度器已经启动，处于应用线程上下文。\n4. 保存修改后，重新构建工程：\n   - 确认没有因 app_main 相关改动而引入新的编译或链接错误。\n## 步骤 4：简单确认调用链路\n1. 从调用关系的角度，在脑中梳理一次当前工程的启动过程：\n   - 复位 → 启动代码 → main() →（如有 RTOS：调度器 + 默认任务）→ app_main()。\n2. 这一步不需要单步调试，只要能用文字描述出大概顺序即可，为后续排查启动问题打基础。\n## 完成标准\n- 可以在工程中准确找到 app_main.cpp 和 app_main() 函数，知道它包含哪些自动生成的初始化内容，以及 User Code 区块大致位置。\n- 已在 main.c 中正确包含 app_main.h，并在合适的位置调用 app_main()（无论是直接在 main() 中，还是在默认 FreeRTOS 任务入口中）。\n- 重新构建工程后没有新增错误，能够清楚说出：当前工程从启动到进入 app_main() 的关键入口函数分别是什么。",
-                    "link": "",
-                    "estimateMinutes": 15
-                },
-                {
-                    "id": "mcu_newbie_basics_blink_led",
-                    "title": "在 app_main() 中用 LibXR GPIO 实现第一个 LED 闪烁",
-                    "desc": "## 参考资料\n- STM32 代码生成 · GPIO 示例：https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-gpio\n- LibXR GPIO 抽象接口说明：https://xrobot-org.github.io/docs/basic_coding/driver/gpio\n- 视频（可选）：【STM32 + VS Code】花式点灯（GPIO、外部中断与 PWM）- XRobot 官方教程 1.1 节\n  https://www.bilibili.com/video/BV1kaWhzNE2t\n本任务只做最基础的“点灯”，外部中断和 PWM 会在后续章节单独说明。\n## 本任务目标\n- 在已经集成 LibXR 的 STM32 工程中，不使用 XRobot，只依靠 LibXR 生成的 GPIO 封装，让开发板上的一个 LED 周期性闪烁。\n- 建立基本印象：一个 STM32GPIO 对象对应一个实际引脚，写 true/false 控制亮灭，延时用 LibXR::Thread::Sleep 控制节奏。\n## 前置条件\n- 已完成「认识生成后的 LibXR 工程并接入 app_main()」，当前工程可以正常构建和下载。\n- 在 STM32CubeMX 的 .ioc 中，已经为某个实际连在 LED 上的引脚配置了输出模式（例如配置为 GPIO_Output），并在修改 .ioc 后重新跑过一次代码生成工具（如 xr_cubemx_cfg）。\n- User/app_main.cpp 中可以找到由 LibXR 为该引脚生成的 STM32GPIO 对象。\n## 步骤 1：确认 LED 对应的 GPIO 对象\n1. 在 STM32CubeMX 中打开 .ioc，确认：\n   - 至少有一个引脚被配置为输出模式，并连接到真实存在的 LED（板载 LED 或你接出的 LED）。\n   - 引脚名称（例如 PA5）和实际硬件连线一致。\n2. 在 VS Code 中打开 User/app_main.cpp，找到 GPIO 初始化那一段：\n   - 普通输入输出引脚通常类似：STM32GPIO gpioA0(GPIOA, GPIO_PIN_0);\n   - 实际工程中多为带语义名的对象，例如：STM32GPIO LED_B(LED_B_GPIO_Port, LED_B_Pin);\n   - 本任务只用这种“普通输入输出”的 STM32GPIO 对象（不带 EXTI 参数的构造函数）。\n3. 记下你准备用来点灯的对象名称，例如 LED_B 或 gpioA0，后续代码将直接操作这个对象。\n## 步骤 2：在 app_main() 中找到用户代码区块\n1. 在 app_main.cpp 中定位 app_main() 函数。\n2. 向下滚动，找到靠近主循环的 User Code 区块，一般类似：\n   - /* User Code Begin 3 */\n   - ...\n   - /* User Code End 3 */\n3. 确认你要写逻辑的 while(1) 循环位于这个 User Code 区块内部：\n   - 如果已经有 while(1)，准备在循环内部填点灯代码。\n   - 如果没有 while(1)，可以在 User Code 区块中自己写一个 while(1) 作为应用主循环。\n## 步骤 3：用 STM32GPIO + LibXR::Thread::Sleep 写出闪烁逻辑\n1. 在上一步确定的 User Code 区块里，使用前面识别出的 GPIO 对象（下面用 led 代称）：\n   - 在 while(1) 循环内，按如下思路编写逻辑：\n     - led.Write(true);\n     - LibXR::Thread::Sleep(若干毫秒);\n     - led.Write(false);\n     - 再 Sleep 一次。\n     - 循环重复。\n2. 延时统一使用 LibXR::Thread::Sleep(...)：\n   - 例如 LibXR::Thread::Sleep(500); 表示延时约 500 ms。\n3. 不同开发板上的 LED 极性可能不同：\n   - 如果发现 true 时灯灭、false 时灯亮，可以在代码中反过来写，或适当调整判断逻辑。\n## 步骤 4：构建、下载并验证现象\n1. 在 VS Code 中通过 STM32 插件构建工程：\n   - 确认刚才添加的点灯代码没有导致编译错误或链接错误。\n2. 构建通过后，使用你已经配置好的调试／下载方式（ST-LINK、J-LINK 或 DAPLink 等）把程序写入开发板。\n3. 让程序运行，观察 LED：\n   - 如果一明一灭、有明确节奏，说明 GPIO 对象和 Sleep 调用工作正常。\n   - 如果始终不亮或常亮：\n     - 回头检查 .ioc 中引脚配置是否正确。\n     - 确认你操作的是正确的 STM32GPIO 对象。\n     - 视情况反转 true/false 的含义重新尝试。\n## 完成标准\n- 工程可以正常构建并成功下载到开发板。\n- 至少有一个 LED 能按照你设定的周期闪烁，现象稳定可复现。\n- 你清楚：\n  - 这个 LED 对应的 STM32GPIO 对象在 app_main.cpp 里的定义位置。\n  - 你在 app_main() 的哪个 User Code 区块里写了点灯逻辑。\n  - 延时是通过 LibXR::Thread::Sleep 控制的，后续要做更复杂的 GPIO 行为时可以在此基础上扩展。",
-                    "link": "",
-                    "estimateMinutes": 20
-                },
-                {
-                    "id": "mcu_newbie_basics_button_exti_pwm",
-                    "title": "按键输入 → 外部中断 → PWM：在同一工程上逐步扩展",
-                    "desc": "## 参考资料\n- STM32 GPIO 代码生成（CodeGenerator）：https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-gpio\n- STM32 PWM 代码生成（CodeGenerator）：https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-pwm\n- LibXR GPIO 驱动文档：https://xrobot-org.github.io/docs/basic_coding/driver/gpio\n- LibXR PWM 驱动文档：https://xrobot-org.github.io/docs/basic_coding/driver/pwm\n- 视频（可选）：【STM32 + VS Code】花式点灯（GPIO、外部中断与 PWM）- XRobot 官方教程 1.1 节\n  https://www.bilibili.com/video/BV1kaWhzNE2t\n## 本任务目标\n在前一节“LED 闪烁”的基础上，对同一个 LibXR 工程分三步扩展：\n1. 先把按键配置成普通输入，通过轮询读取按键状态控制 LED。\n2. 再把按键改为外部中断，引脚中断回调里直接翻转 LED。\n3. 最后为 LED 配置 PWM 输出，用占空比控制亮度（例如多档亮度或简单“呼吸灯”）。\n## 前置条件\n- 已完成“在 app_main() 中用 LibXR GPIO 实现第一个 LED 闪烁”，当前工程可以正常编译和下载。\n- 工程中已经接入 app_main()，LED 的 STM32GPIO 对象在 app_main.cpp 中可见。\n## 一、阶段 1：按键作为普通输入，轮询控制 LED\n1. 在 STM32CubeMX 中配置按键引脚：\n   - 打开当前 .ioc 工程，选择一个实际接了按键的引脚。\n   - 将模式设置为 GPIO Input。\n   - 根据硬件电路选择上拉或下拉，例如：\n     - 按键一端接地，未按下时希望为高电平，则配置为上拉输入。\n2. 重新生成 STM32CubeMX 代码，并重新运行 LibXR 代码生成：\n   - 在 STM32 工程根目录运行一遍代码生成流程（例如 xr_cubemx_cfg -d .）。\n   - 打开 User/app_main.cpp，找到新生成的按键对象，例如：STM32GPIO USER_KEY(USER_KEY_GPIO_Port, USER_KEY_Pin);\n3. 在 app_main() 中使用轮询读取按键：\n   - 在 app_main() 的主循环所在 User Code 区块中：\n     - 在 while(1) 内，每次循环调用 USER_KEY.Read() 读取电平。\n     - 根据接线方式决定是否对读到的布尔值取反（例如上拉输入时，按下为 0，需要取反才表示“按下”）。\n     - 在检测到按下时，切换一个本地“LED 状态”变量，并调用 LED 对象的 Write(true/false)。\n     - 在循环末尾调用 LibXR::Thread::Sleep(...) 控制轮询周期，同时起到简单去抖的作用。\n## 二、阶段 2：为按键启用外部中断，在中断回调里直接翻转 LED\n1. 在 STM32CubeMX 中启用按键的 EXTI 功能：\n   - 保持前面“输入 + 合理上下拉”的配置不变。\n   - 在 EXTI 配置中，为该按键引脚分配一个外部中断通道（例如 EXTI0、EXTI1 等），触发边沿可根据需要选择上升沿、下降沿或双沿。\n   - 确认 NVIC 中对应 EXTI 中断通道已启用。\n2. 再次生成 STM32CubeMX 代码，并重新运行 LibXR 代码生成：\n   - 在工程根目录再跑一次代码生成流程。\n   - 打开 User/app_main.cpp，检查按键对象构造方式是否变为类似：STM32GPIO USER_KEY(USER_KEY_GPIO_Port, USER_KEY_Pin, EXTI0_IRQn);\n3. 在 app_main() 中为按键注册中断回调并使能中断：\n   - 在按键对象定义之后、主循环之前：\n     - 调用 USER_KEY.RegisterCallback(...) 注册一个回调。\n     - 在回调中直接操作 LED 对象，例如：读取当前状态后写入相反状态，实现“每次中断翻转 LED”。\n     - 调用 USER_KEY.EnableInterrupt() 使能中断。\n4. 简化主循环逻辑：\n   - 主循环仍然使用 while(1) 和 LibXR::Thread::Sleep(...) 保持循环节奏。\n   - 此时不再在循环里轮询按键电平，而是完全依赖外部中断回调处理按键事件。\n## 三、阶段 3：为 LED 配置 PWM 输出，调节亮度\n1. 在 STM32CubeMX 中为 LED 配置 PWM：\n   - 选择一个定时器（例如 TIMx），把某个通道配置为 PWM 输出模式。\n   - 将该 PWM 通道的输出引脚连接到实际用于点亮 LED 的引脚。\n   - 保持默认频率与计数设置即可，后续用占空比调节亮度。\n2. 重新生成 STM32CubeMX 代码，并重新运行 LibXR 代码生成：\n   - 在 User/app_main.cpp 中，查找与该定时器通道对应的 STM32PWM 对象，例如：STM32PWM pwm_tim1_ch1(&htim1, TIM_CHANNEL_1, false);\n3. 在 app_main() 中启用 PWM，并通过 SetDutyCycle 控制亮度：\n   - 在主循环之前，对 PWM 对象调用 Enable()。\n   - 在主循环中，周期性调整占空比：\n     - 例如在 0.0 ~ 1.0 之间递增，再在 1.0 ~ 0.0 之间递减，配合 LibXR::Thread::Sleep(...) 实现一个简单的“亮度渐变”。\n     - 或者划分几个固定档位（例如 0.2、0.5、0.8），每次按键中断回调里切换到下一档，并在回调中调用 SetDutyCycle(...) 更新占空比。\n4. 与按键中断结合使用（可选）：\n   - 按键中断回调不再翻转 LED 开关，而是调整一个“当前亮度档位”，再调用 PWM 对象的 SetDutyCycle(...)。\n   - 主循环只负责适当 Sleep 保持程序运行节奏，不再直接操作 LED。\n## 完成标准\n- 阶段 1：按键作为普通输入，通过轮询 Read() 的方式控制 LED 开关，现象稳定。\n- 阶段 2：按键配置为外部中断后，在中断回调里直接翻转 LED，按下立即有变化。\n- 阶段 3：为 LED 配置 PWM 后，可以通过 SetDutyCycle(...) 明显改变 LED 亮度，可选地用按键在不同亮度档位之间切换。\n- 能够说清：\n  - CubeMX 中对 GPIO 输入、EXTI 和 PWM 的三次配置分别带来了哪些 STM32GPIO / STM32PWM 对象变化。\n  - 自己在 app_main() 的哪些 User Code 区块中添加了按键逻辑、中断回调和 PWM 亮度控制。",
-                    "link": "https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-gpio",
-                    "estimateMinutes": 30
-                },
-                {
-                    "id": "mcu_newbie_basics_uart_hw",
-                    "title": "硬件串口：用 LibXR 发送简单文本（初识 I/O 操作模型）",
-                    "desc": "## 参考资料（本节只用“硬件串口”，先不管 USB / 终端）\n- STM32 硬件串口代码生成（CodeGenerator）：https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-uart\n- LibXR UART 驱动文档（概念与接口）：https://xrobot-org.github.io/docs/basic_coding/driver/uart\n- I/O 操作模型概念（为什么每次 I/O 都要绑定完成行为）：https://xrobot-org.github.io/docs/concept\n- Operation 抽象（Operation / ReadOperation / WriteOperation）：https://xrobot-org.github.io/docs/basic_coding/core/core-op\n- ReadPort / WritePort 抽象：https://xrobot-org.github.io/docs/basic_coding/core/core-rw\n- 原始数据封装 RawData / ConstRawData：https://xrobot-org.github.io/docs/basic_coding/core/core-rawdata\n- LibXR C++ API 参考文档（查某个类 / 函数的具体接口定义时使用）：https://jiu-xiao.github.io/libxr/\n本节只做“硬件串口 + 简单文本输出”，先不启用 USB CDC、终端和 STDIO::Printf。\n## 本任务目标\n- 在已有的 LibXR STM32 工程中，把一组硬件串口（例如 USART1）配置完整，并通过 CodeGenerator 生成对应的 STM32UART 对象。\n- 理解一件事：在 LibXR 中，任何 I/O 操作都需要带上一个 Operation（例如 WriteOperation），在发起时就决定“完成后怎么处理”。\n- 在 app_main() 中，通过 STM32UART 周期性向 PC 串口工具发送一行简单文本（例如 \"Hello from LibXR\"），验证串口和 I/O 操作模型的基本用法。\n## 前置条件\n- 已有一个可以在 VS Code 中正常编译、下载的 LibXR STM32 工程：\n  - main()（或 FreeRTOS 线程入口）中已经调用 app_main()；\n  - 至少有一个 LED 闪烁示例已经跑通。\n- 开发板已连接到电脑，PC 端有任意串口调试工具（例如 PuTTY、Termite、串口监视器等）。\n## 一、在 STM32CubeMX 中配置硬件串口（只做 USART，不管 USB）\n1. 选择一路硬件串口：\n   - 打开当前工程的 .ioc。\n   - 选择一组可用的串口实例（例如 USART1），将其模式设置为 Asynchronous。\n   - 将 TX / RX 引脚映射到实际有连线的引脚（开发板丝印上通常会标出 TX / RX）。\n2. 启用中断和 DMA：\n   - 在 NVIC 配置中启用该串口的全局中断（例如 USART1 global interrupt）。\n   - 在 DMA 配置中：\n     - 为该串口配置发送（TX）和接收（RX）的 DMA 通道。\n     - 保持默认模式即可。\n   - 保存 .ioc 并重新生成 STM32 代码。\n## 二、重新运行 CodeGenerator，找到 STM32UART 对象\n1. 在工程根目录重新生成 LibXR 相关代码：\n   - 回到 VS Code，确认当前打开的是 STM32 工程根目录（包含 .ioc 和 CMakeLists.txt 的那一层）。\n   - 打开终端，在根目录执行一次完整的代码生成流程，例如：xr_cubemx_cfg -d .。\n   - 生成结束后重新构建工程，确保仍然可以通过编译。\n2. 在 app_main.cpp 中找到硬件串口对象：\n   - 打开 User/app_main.cpp，搜索 \"STM32UART\"。\n   - 应当能看到类似下面的定义（名称可能不同）：STM32UART usart1(&huart1, usart1_rx_buf, usart1_tx_buf, 5);\n   - 构造参数可以这样理解：\n     - &huart1：CubeMX 生成的 HAL 串口句柄。\n     - usart1_rx_buf / usart1_tx_buf：CodeGenerator 为 DMA 分配的接收 / 发送缓冲区。\n     - 最后一个参数是发送请求队列长度（tx_queue_size），控制同时可以排队的写操作数量。\n## 三、本节只需要记住的几个类型\n1. STM32UART：\n   - 针对 STM32 平台的 UART 驱动类，实现了 LibXR::UART 接口。\n   - 负责协调 HAL 串口句柄、DMA 缓冲区和 LibXR 的 I/O 抽象（ReadPort / WritePort）。\n2. ReadPort / WritePort（只建立印象）：\n   - STM32UART 内部持有 ReadPort / WritePort：\n     - ReadPort 负责收数据。\n     - WritePort 负责发数据。\n   - 每次读写时，都会搭配一个 Operation（ReadOperation / WriteOperation）说明“完成后怎么处理”。\n3. RawData / ConstRawData（长度从哪里来）：\n   - RawData 和 ConstRawData 用来把“一段内存的起始地址 + 字节数”打包在一起：\n     - RawData 用于可读写数据。\n     - ConstRawData 用于只读数据。\n   - LibXR 的读写接口通常写成类似形式：\n     - 读：Read(RawData data, ReadOperation &op)\n     - 写：Write(ConstRawData data, WriteOperation &op)\n   - 当你准备了一段待发送的数据时，例如：uint8_t msg[] = \"Hello from LibXR\\r\\n\"; 可以构造一个 ConstRawData data(msg)。构造函数会自动记录 msg 的起始地址和有效长度（不包含结尾的 \\0）。\n4. WriteOperation：\n   - 表示“写操作完成后如何处理”的选择。\n   - 本节先记住两种用法：\n     - 默认构造（不带参数）：发起写操作但不关心结果，可视为“发出请求后不再等待”。\n     - 使用信号量构造：发起写操作，并让当前任务在信号量上等待，直到写操作完成或超时。\n5. 信号量（Semaphore）：\n   - 可以简单理解为一个“等事件”的计数器：\n     - 写操作开始时，当前任务在信号量上阻塞等待。\n     - 底层驱动在确认发送完成后“释放”信号量。\n     - 阻塞的任务被唤醒，继续执行。\n   - LibXR 在所有支持的平台上都提供自己的信号量抽象。\n6. LibXR::Thread::Sleep：\n   - 与前面点灯时使用的一致，用于在主循环中控制节奏。\n## 四、在 app_main() 里通过串口周期性发送文本\n1. 从最简单的完成行为开始：\n   - 先使用默认构造的 WriteOperation：\n     - 不绑定信号量，不绑定回调。\n     - 写操作发出后，程序不会等待发送完毕，只是把数据放入发送队列，由底层驱动在后台发送。\n2. 在 app_main() 的 User Code 区域中添加发送逻辑：\n   - 打开 User/app_main.cpp，找到 app_main() 函数中最后一个 while(1) 所在的 User Code 区块。\n   - 在该循环内添加类似逻辑：\n     - 准备要发送的文本：\n       - uint8_t msg[] = \"Hello from LibXR\\r\\n\";\n     - 构造数据对象和操作对象：\n       - ConstRawData data(msg);\n       - WriteOperation op;  // 默认构造，表示不关心完成结果\n     - 调用 usart1.Write(data, op); 发起发送。\n     - 调用 LibXR::Thread::Sleep(1000); 控制发送间隔（例如 1 秒一次）。\n   - 重新编译并下载程序。\n   - 打开 PC 串口调试工具，选择正确的串口号和波特率，观察是否有周期输出。\n3. 使用信号量的阻塞写（可选）：\n   - 创建一个 LibXR::Semaphore 对象。\n   - 用该信号量和一个超时时间构造 WriteOperation。\n   - 在主循环中使用这个 WriteOperation 调用 usart1.Write(data, op_block)。\n   - 当前任务会在信号量上等待，直到写操作完成或超时，再继续执行后续逻辑。\n   - 对比两种方式：\n     - 默认 WriteOperation：只要队列未满，写操作立即返回，节奏主要由 Sleep 控制。\n     - 带信号量的 WriteOperation：主循环还要等待本次写操作完成，再进入下一轮。\n## 五、（选做）尝试做一个最简单的串口回显\n- 在 app_main() 中准备接收缓冲区。\n- 使用 ReadOperation 发起一次读取请求（阻塞或回调模式）。\n- 读取完成后，把收到的数据再通过 Write 发送回串口。\n- 在 PC 串口工具中键入字符，如果能被原样回显，说明收发路径已经打通。\n## 完成标准\n- 已在 .ioc 中为至少一路硬件串口配置了 Asynchronous 模式、NVIC 中断和 TX/RX DMA，并重新生成 STM32 代码。\n- 通过 CodeGenerator 重新生成工程后，能在 app_main.cpp 中找到对应的 STM32UART 对象，并能说清每个构造参数的含义（特别是最后一个参数是发送请求队列长度）。\n- 在 app_main() 的 User Code 区域中，实现了周期性向串口发送文本的逻辑，在 PC 串口工具中能看到稳定输出。\n- 能用自己的话描述：\n  - 为什么 LibXR 在进行串口写操作时总是需要一个 WriteOperation。\n  - 本示例中默认构造的 WriteOperation 表示什么样的完成行为。\n  - 如果改用带信号量的 WriteOperation，会对主循环行为产生什么变化。\n- （选做）完成一个最简单的“串口回显”实验：PC 端发什么，板子通过同一串口原样发回。",
-                    "link": "https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-uart",
-                    "estimateMinutes": 30
-                },
-                {
-                    "id": "mcu_newbie_basics_review",
-                    "title": "小结：从 CubeMX 到 app_main 的完整链路和学习方法",
-                    "desc": "## 本任务目标\n- 回顾前面几个任务，从整体上把“工程配置 → 代码生成 → LibXR 初始化 → 自己写逻辑”这条链路串起来。\n- 不只是记住“怎么点灯、怎么发串口”，而是形成一套以后可以反复使用的查文档和排错方法。\n## 一、你目前已经具备的基础\n可以先在脑中快速过一遍自己已经做过的事情：\n- 环境层面：\n  - 能在 Windows 上用 VS Code + STM32 插件打开、构建和下载 STM32 CMake 工程。\n  - 知道 Python / pip 在哪里，安装过 libxr（CodeGenerator）和 xrobot（后面会用到）。\n- 工程和 LibXR：\n  - 用 STM32CubeMX 生成过基础工程，知道 .ioc 在哪、Core/ 和 Drivers/ 大致放什么。\n  - 用 CodeGenerator（例如 xr_cubemx_cfg）在原工程上集成过 LibXR，见过新出现的 Middlewares/Third_Party/LibXR 和 User/app_main.cpp 等文件。\n  - 知道 app_main() 在哪里，理解它负责完成 LibXR 平台初始化和外设封装对象的创建。\n- 自己写的部分：\n  - 在 app_main.cpp 的 User Code 区域实现过点灯。\n  - 在同一位置实现过串口定时发送文本。\n这些内容不需要逐条背下来，但要有一个清晰认识：你已经从“完全空白”走到了“能在自己的工程里加一些真实逻辑”。\n## 二、通用思路：以后每加一个功能可以先问自己三件事\n1. 变化首先发生在什么位置？\n- 需要新增 / 修改外设、引脚、中断、时钟？\n  - 优先回到 STM32CubeMX 修改 .ioc。\n- 是初始化逻辑或“某个外设对象怎么来的”不清楚？\n  - 优先看 .config.yaml 和 CodeGenerator 生成的 app_main.cpp。\n- 是某个 LibXR 类 / 函数的具体用法不明白？\n  - 去 LibXR 文档和 C++ API 参考里查对应的类和成员函数。\n2. “自己写的逻辑”应该放在哪里？\n- 当前阶段的主要位置就是 app_main.cpp 中的 User Code Begin / End 区域。\n- 生成器负责把外设和 LibXR 接好，你在 User Code 区域里只关心“拿到这些对象之后要做什么”。\n- 以后再生成代码时，只要逻辑写在 User Code 区域里，就不会被覆盖。\n3. 这是“不会用接口”，还是“行为不符合预期”？\n- 不会用接口：\n  - 先看当前路线对应的任务说明。\n  - 再看 LibXR 文档或 API 页面，确认函数签名和参数含义。\n- 行为不符合预期（比如灯不闪、串口没输出）：\n  - 先检查硬件连接和 CubeMX 配置。\n  - 再看 app_main.cpp 里相关外设对象是否正确创建。\n  - 最后再看自己写的逻辑是否过于复杂，必要时简化成“只做一件小事”的版本来排查。\n## 三、如何查文档和示例（建议形成习惯）\n当你遇到“这个名字看着眼熟，但具体怎么用不确定”的情况时，可以按下面的顺序查：\n1. 当前路线中的任务页面：\n   - 优先看当前小节的任务描述和代码片段，它们通常已经针对新手做了取舍。\n   - 如果示例里已经有类似写法，可以先照着跑通，再按需要微调。\n2. 官方文档：\n   - XRobot / LibXR 文档主页：\n     - https://xrobot-org.github.io/\n     - https://jiu-xiao.github.io/libxr/\n   - 常见查找方式：\n     - 按“类别”找：例如 basic_coding/driver/gpio、driver/uart、core-op、core-rw、core-rawdata 等。\n     - 按“类名”找：在 API 参考中搜索 STM32GPIO、STM32UART、UART、GPIO 等关键字。\n3. GitHub 仓库 README 和示例：\n   - LibXR、CodeGenerator、XRobot 的 README：\n     - 一般会介绍这个仓库主要负责哪一块工作。\n     - 有时会附带最小示例代码或命令行用法。\n   - 不需要完整读完，只要抓两点：\n     - 这个工具负责哪一层。\n     - 有没有和你当前需求类似的简单片段可以直接参考。\n4. 报错信息：\n   - 优先看第一条错误，不要被整屏红字吓到。\n   - 记下其中的函数名、类型名或文件名，这些往往是定位问题的线索。\n   - 若看不懂，可以带着关键字回到文档或代码中搜索含义。\n## 四、排错时的简单检查顺序\n以后遇到问题，可以尝试按下面的顺序简要检查一遍：\n1. 硬件和连接：\n   - 开发板是否有正常供电，调试器是否连接牢固。\n   - 引脚是否和 .ioc 里配置的那几路一致（尤其是 LED、按键、串口）。\n2. CubeMX 配置：\n   - 对应外设是否启用。\n   - 中断 / DMA 是否为该外设打开。\n   - 修改后是否重新生成了 STM32 代码。\n3. CodeGenerator 和 LibXR：\n   - 修改 .ioc 后是否重新运行过代码生成（例如 xr_cubemx_cfg）。\n   - 工程是否重新配置 / 编译。\n   - app_main.cpp 中是否已经出现对应的 LibXR 封装对象。\n4. 自己的代码：\n   - 能否先写一个“只做一件事”的版本：\n     - 串口只发固定字符串。\n     - GPIO 只翻转一次或按固定周期翻转。\n   - 确认最小版本能工作后，再往里逐步增加条件和逻辑。\n## 五、后面会发生什么（只做心理准备）\n在后续的路线中，还会逐步接触：\n- 更多外设：例如 ADC、定时器、更多 GPIO 组合。\n- 部分中间件：事件、消息、日志等。\n- 更复杂一些的应用结构。\n但总体上，仍然是在同一条链路上往前走：\n- 从 CubeMX 做配置。\n- 用 CodeGenerator 生成或更新 LibXR 初始化代码。\n- 在 app_main.cpp 的 User Code 区域里，基于已经封装好的对象继续写自己的逻辑。\n## 完成标准\n- 你能用自己的话说出：\n  - STM32CubeMX、CodeGenerator、LibXR、app_main.cpp 中 User Code 各自负责什么。\n  - 遇到新需求或错误时，大致会从哪几方面着手排查。\n- 你有一个自己认可的“查文档顺序”：先看当前任务 → 再看官方文档 / API → 必要时看 README 和示例。\n- 接受这样一件事：后面会有更多外设和中间件加入进来，但思路仍然是沿着同一条链路逐步扩展，而不是推倒重来。",
-                    "link": "",
-                    "estimateMinutes": 10
-                }
-            ],
-            "next": "mcu_newbie_periph"
+        {
+          "id": "mcu_newbie_env_python_setup",
+          "title": "安装 Python 工具：libxr / xrobot（可配合视频）",
+          "link": "https://xrobot-org.github.io/docs/env_setup",
+          "estimateMinutes": 10,
+          "descMd": "md/mcu_newbie_env/mcu_newbie_env_python_setup.md"
         },
-        "mcu_newbie_periph": {
-            "type": "task",
-            "title": "MCU · 新手 · 外设与基础中间件（USB 串口 / 命令行 / 数据库）",
-            "subtitle": "在已有 LibXR 工程上，扩展更多 I/O 能力和参数管理手段",
-            "tags": [
-                "MCU",
-                "新手",
-                "LibXR",
-                "STM32",
-                "USB",
-                "终端",
-                "数据库"
-            ],
-            "tasks": [
-                {
-                    "id": "mcu_newbie_periph_overview",
-                    "title": "其他外设与基础中间件：能力与文档入口",
-                    "desc": "## 本任务目标\n- 在“点灯 + 串口”的基础上，整体认识 LibXR 在 STM32 侧还提供了哪些常用外设封装和基础中间件能力。\n- 学会根据文档自行选择一个或少量外设 / 组件，在现有工程中做一个小实验，独立尝试相应的 C++ 接口。\n- 建立一份“文档索引”的印象：以后遇到某个模块时知道应该优先从哪里查起。\n## 前置条件\n- 已完成前面“第一个 LibXR 工程（点灯 + 串口）”相关任务：\n  - 工程能在 VS Code 中正常编译和下载。\n  - app_main() 已经接入。\n  - 至少有一个 LED 闪烁和一个串口文本输出示例可以正常运行。\n## 一、先大致看一眼：有哪些外设可以自动生成\n入口文档：\n- STM32 代码生成（总览）：https://xrobot-org.github.io/docs/code_gen/stm32\n在这页的子页面中，可以看到当前支持的主要外设与功能，例如：\n- Flash 数据库\n- 时钟基准\n- GPIO / ADC / DAC / PWM\n- SPI / I2C / CAN 与 CAN FD\n- 串口与终端\n- 看门狗\n- 高速缓存\n本步骤建议做的事情：\n- 只浏览标题和最前面的概览部分，不必细读细节。\n- 对照自己的开发板，先想一想：\n  - 手上有没有接传感器（ADC / I2C / SPI）。\n  - 是否想要做一个简单的 Flash 参数存储。\n  - 是否想先多玩一点 GPIO / 串口以外的外设。\n- 初步在心里选出 1–2 个“有硬件条件、也有兴趣”的方向。\n## 二、再看抽象接口：同一类外设在 C++ 里长什么样\n入口文档：\n- 外设驱动（Device Drivers）：https://xrobot-org.github.io/docs/basic_coding/driver\n这里给出了统一的 C++ 抽象接口，包括：\n- GPIO（通用输入输出）。\n- UART（串口通信）。\n- I2C / SPI / CAN / ADC / PWM 等。\n- Flash、Power、Timebase 等基础能力。\n本步骤建议做的事情：\n- 针对你在上一步选中的外设，在 driver/ 下找到对应的小节，例如：\n  - 想继续玩 GPIO，就看 driver/gpio。\n  - 想试 I2C，就看 driver/i2c。\n  - 想试 SPI，就看 driver/spi。\n  - 想试 ADC，就看 driver/adc。\n- 只关注几件事：\n  - 抽象类的名称（例如 ADC、I2C、SPI、UART 等）。\n  - 是否有 Configuration 结构体、SetConfig()、Enable()/Disable() 之类的接口。\n  - 最基础的读写或控制方法叫什么（例如 Read()、Write()、SetDutyCycle()）。\n遇到某个类或函数名不清楚时，可以在 LibXR C++ API 索引中查：https://jiu-xiao.github.io/libxr/\n## 三、选择一个方向，做一个只涉及少量代码的小实验\n本任务没有“统一的标准示例代码”，而是鼓励你根据手头硬件和兴趣，在现有工程上做一个小范围尝试。可以参考以下思路任选其一（或自选）：\n### 示例方向 1：在现有工程上再增加一个 GPIO 功能\n- 例如：新增一个按键输入，只做“读一次电平并通过串口打印”。\n- 对照文档：\n  - STM32 代码生成 · GPIO：https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-gpio\n  - GPIO 驱动接口：https://xrobot-org.github.io/docs/basic_coding/driver/gpio\n- 自己完成的核心动作：\n  - 在 .ioc 中配置一个新引脚为输入，重新生成 STM32 代码并运行一次 CodeGenerator。\n  - 在 app_main.cpp 中找到新生成的 STM32GPIO 对象。\n  - 在 User Code 区域写几行代码，读一次电平，通过串口打印当前状态，确认输出随按键变化。\n### 示例方向 2：简单尝试一个 ADC 通道\n- 前提：板子上有可用的 ADC 输入（电位器、分压电路或任意可观察变化的信号）。\n- 对照文档：\n  - STM32 代码生成 · ADC（在 code_gen/stm32 下）。\n  - ADC 驱动接口（在 basic_coding/driver/adc 下）。\n- 自己完成的核心动作：\n  - 在 .ioc 中启用一个 ADC 通道，重新生成 STM32 代码并运行 CodeGenerator。\n  - 在 app_main.cpp 中找到对应的 LibXR ADC 封装对象。\n  - 在循环中定期读取一次 ADC 数值，并通过串口打印出来（不追求精确标定，只要数值随输入变化即可）。\n### 示例方向 3：用 I2C 或 SPI 读取一个简单传感器寄存器（例如 MPU6050 WHO_AM_I）\n- 前提：开发板上接有简单传感器模块（例如基于 MPU6050 的模块），并且已确认其使用 I2C 或 SPI 接口。\n- 对照文档：\n  - STM32 代码生成 · I2C：https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-i2c\n  - STM32 代码生成 · SPI：https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-spi\n  - I2C 驱动接口：https://xrobot-org.github.io/docs/basic_coding/driver/i2c\n  - SPI 驱动接口：https://xrobot-org.github.io/docs/basic_coding/driver/spi\n- 自己完成的核心动作（以 I2C 为例，SPI 思路类似）：\n  1. 在 .ioc 中开启一条 I2C 总线：配置 SCL / SDA 引脚为 I2C 功能，并启用该 I2C 外设。\n  2. 重新生成 STM32 代码并运行 CodeGenerator，在 app_main.cpp 中找到对应的 STM32I2C 对象。\n  3. 查阅 MPU6050 的资料，确认其 I2C 地址和 WHO_AM_I 寄存器地址。\n  4. 在 app_main() 的 User Code 区域中：\n     - 按文档说明，使用 STM32I2C 封装的读写接口向传感器写入寄存器地址，再读取 1 字节数据。\n     - 将读取到的值通过串口打印出来。\n  5. 程序运行后，观察串口输出的 WHO_AM_I 值是否与数据手册一致。\n你也可以根据文档自行组合：只要改动范围不大、现有工程能稳定编译运行，并且你确实看过对应文档再动手，即可视为本节实践内容。\n## 四、遇到问题时建议的查找顺序\n当你在这个小实验中遇到“不会用”或“行为不对”时，可以按下面顺序排查：\n1. STM32 代码生成文档（code_gen/stm32 下对应外设）：\n   - CubeMX 中需要开启哪些外设、通道、DMA、中断。\n   - CodeGenerator 生成了哪些对象（在 app_main.cpp 中叫什么名字）。\n2. 外设驱动文档（basic_coding/driver 下对应外设）：\n   - 抽象类有哪些基础接口。\n   - 启用、配置、读写分别怎么调用。\n3. C++ API 索引（https://jiu-xiao.github.io/libxr/）：\n   - 查具体类和函数的签名、参数类型和返回值含义。\n## 五、完成标准\n- 能用自己的话说出：\n  - STM32 代码生成文档主要负责说明“.ioc 配完之后，会生成哪些 C++ 对象和配置文件”。\n  - 外设驱动文档负责说明“这些对象在 C++ 层面有哪些接口，可以做哪些操作”。\n- 在现有 LibXR STM32 工程上，基于文档自选至少一个外设或组件：\n  - 在 .ioc 中完成配置并重新生成代码。\n  - 通过 CodeGenerator 更新工程后，在 app_main.cpp 中找到对应对象。\n  - 在 User Code 区域加入一小段逻辑，成功编译并在板子上看到可观察的效果（如串口输出、LED 变化、传感器寄存器返回值等）。\n- 遇到不确定的类型 / 函数时，能够主动去文档和 API 索引中查，而不是只依赖现成示例代码。",
-                    "link": "https://xrobot-org.github.io/docs",
-                    "estimateMinutes": 60
-                },
-                {
-                    "id": "mcu_newbie_periph_usb_terminal",
-                    "title": "USB 串口与终端：通过配置启用 Terminal + RamFS 命令行",
-                    "desc": "## 参考资料\n- STM32 串口与终端代码生成（重点看“硬件串口 / USB CDC / 配置文件说明”）：\n  https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-uart\n- Terminal 终端组件文档：\n  https://xrobot-org.github.io/docs/basic_coding/middleware/terminal\n- RamFS 内存文件系统文档：\n  https://xrobot-org.github.io/docs/basic_coding/middleware/ramfs\n- LibXR C++ API 索引：\n  https://jiu-xiao.github.io/libxr/\n## 本任务目标\n- 在“硬件串口已能正常发送文本”的基础上，通过修改配置文件 + 重新生成工程：\n  - 可选：启用 USB CDC 虚拟串口（板子支持的话）。\n  - 启用基于某个串口（硬件 UART 或 USB CDC）的 Terminal + RamFS 命令行终端。\n- 理解：带有配置文件的小节，初始化代码基本都由 CodeGenerator 自动生成，你主要负责“改对配置 + 看得懂生成出来的代码”。\n## 一、先把几个新名词说明白\n1. USB CDC / 虚拟串口（Virtual COM Port）：\n   - USB CDC：USB Communications Device Class，一种标准的 USB 设备类型。\n   - 在 PC 眼里，CDC 设备会表现成一个“虚拟串口”，用串口工具就能直接打开，使用方式和普通串口类似。\n2. CDCUart：\n   - LibXR::USB::CDCUart：把“USB CDC 端点”包装成类似串口的对象，对上层来说和 STM32UART 很像。\n3. Terminal：\n   - LibXR::Terminal：一个跑在串口上的“命令行终端”，支持 ls、cd、历史记录、补全等。\n4. RamFS：\n   - LibXR::RamFS：完全在内存中的一个小文件系统。\n5. STDIO：\n   - LibXR::STDIO：一个全局的“标准输入输出”接口，可以绑定到某个串口或 CDCUart 上。\n6. YAML 配置：\n   - .config.yaml / libxr_config.yaml：工程配置文件，串口、USB、终端等行为都在这里描述。\n## 二、准备：确认可用的“串口来源”\n终端可以绑定到两类来源之一：\n1. 硬件串口（STM32UART）：app_main.cpp 中的 STM32UART usart1 等。\n2. USB CDC 虚拟串口（如果硬件和工程支持）：启用 USB OTG，生成 CDCUart + USB 设备对象。\n如果目前不想折腾 USB，可以只在硬件串口上启用终端。\n## 三、修改配置文件：启用 USB（可选）和 terminal_source\n1. 启用 USB CDC（可选）：\n   - 在 .config.yaml / libxr_config.yaml 中找到 USB 段落，将对应 USB_OTG 的 enable 从 false 改为 true。\n   - 保存后重新生成代码，CodeGenerator 会自动补齐 USB 配置并在 app_main.cpp 中添加 CDCUart + USB 设备对象以及 Init()/Start() 调用。\n2. 指定终端绑定到哪一路“串口对象”：\n   - 在同一配置文件中找到 terminal_source 字段：\n     - 使用硬件串口：terminal_source: usart1。\n     - 使用 USB CDC：terminal_source: usb_otg_fs_cdc（名字以实际生成的对象为准）。\n3. Terminal 运行参数（先保持默认）：\n   - Terminal:\n     - read_buff_size、max_line_size、max_arg_number、max_history_number。\n     - run_as_thread: true。\n     - thread_stack_depth、thread_priority 使用默认即可。\n## 四、重新生成代码\n- 在工程根目录执行一次 xr_cubemx_cfg -d .。\n- CodeGenerator 会根据 YAML 自动完成：\n  - 若 USB enable: true：生成 CDCUart + USB 设备对象，并在 app_main.cpp 中调用 Init()/Start()。\n  - 根据 terminal_source 自动生成 STDIO 绑定、RamFS 和 Terminal 初始化代码，并按配置决定是否以线程方式运行终端。\n## 五、在 app_main.cpp 中确认生成结果\n1. 检查 USB CDC（如已启用）：\n   - 搜索 CDCUart / USB_OTG，可看到 CDCUart 对象、USB 设备对象以及 Init()/Start() 调用。\n2. 检查 STDIO 绑定和 Terminal / RamFS：\n   - 搜索 Terminal / RamFS，可看到 RamFS 实例、Terminal 实例、Terminal 线程或运行入口。\n   - 附近会有 STDIO::read_ / STDIO::write_ 绑定到 terminal_source 对象的代码。\n3. 确认 User Code 区域仍然存在，之前写的点灯、串口输出逻辑未被覆盖。\n## 六、用串口工具连接并尝试命令行\n1. 构建并下载工程，让程序运行。\n2. 在 PC 上用 PuTTY / MobaXterm 或任意串口工具：\n   - 若 terminal_source: usart1：选对应的串口号 + 波特率。\n   - 若 terminal_source: usb_otg_fs_cdc：用 USB 连接板子，选择新出现的虚拟串口号。\n3. 连接后尝试输入：\n   - ls 查看目录。\n   - cd /、cd .. 切换目录。\n   - 使用方向键、退格键测试输入编辑和历史记录。\n若这些操作都有明确反馈，说明终端正常工作。\n## 七、遇到问题时的检查顺序\n1. 硬件与 PC 设置：\n   - 板子供电是否正常，串口号是否选对，波特率是否一致。\n2. CubeMX 与 YAML 配置：\n   - USB 外设是否启用，terminal_source 是否为正确的对象名。\n3. 代码生成与构建：\n   - 修改配置后是否重新执行 xr_cubemx_cfg -d .。\n   - 重新生成后是否完整构建工程。\n4. 生成代码状态：\n   - app_main.cpp 中能否找到 CDCUart / USB 设备对象、STDIO 绑定、RamFS 和 Terminal 初始化代码。\n   - 是否误改了非 User Code 区域。\n## 完成标准\n- 通过修改配置文件（而不是手写初始化代码），成功启用：\n  - 至少一个终端来源（硬件串口 usart1 或 USB CDC）。\n  - 基于 Terminal + RamFS 的命令行环境。\n- 能在 app_main.cpp 中清楚指出：\n  - 与 terminal_source 对应的 STDIO 绑定位置。\n  - RamFS 和 Terminal 的初始化代码以及线程启动位置。\n- 使用串口工具成功连接板子，在终端中可以输入 ls / cd 等基本命令并获得反馈。\n- 能说明：USB CDC 和终端相关的大部分初始化是通过“修改 YAML + 重新生成”完成的，自己主要工作是选好终端使用的串口与配置，并在 User Code 区域基于这些生成对象继续扩展逻辑。",
-                    "link": "https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-uart",
-                    "estimateMinutes": 25
-                },
-                {
-                    "id": "mcu_newbie_periph_flash_db",
-                    "title": "使用 Flash 数据库存储简单配置参数",
-                    "desc": "## 参考资料\n- STM32 Flash 数据库代码生成说明（重点看 flash_map.hpp 和使用示例）：\n  https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-flash\n- Database 闪存数据库中间件文档：\n  https://xrobot-org.github.io/docs/basic_coding/middleware/database\n- LibXR C++ API 索引（查 STM32Flash / Database / Key 等类的具体接口）：\n  https://jiu-xiao.github.io/libxr/\n- 视频（可选）：【LibXR STM32 C++ 代码生成工具 第四节-Flash数据库】\n  https://www.bilibili.com/video/BV1UQGCzSE74\n## 本任务目标\n- 利用 CodeGenerator 已生成的 flash_map.hpp，在 app_main() 中创建一个 STM32Flash 对象。\n- 基于 STM32Flash 创建一个 Flash 数据库（DatabaseRaw 或 DatabaseRawSequential），并定义至少 1 个键值。\n- 实现一个最小示例：记录“开机次数”或一个简单配置参数，让它在复位后依然保留（存到 Flash，而不是丢在 RAM 里）。\n## 一、前置条件与整体思路\n开始之前，建议已经具备：\n- 一个可以正常编译、下载、运行的 LibXR STM32 工程：\n  - 已经接入 app_main()。\n  - 至少实现过 LED 闪烁或串口输出。\n- 已经运行过一次 xr_cubemx_cfg（或等价流程），工程中出现了 User/flash_map.hpp。\n- 最好已经有一条可靠的串口输出路径，方便把数据库里的值打印出来做验证。\n整体思路：\n1. 利用 flash_map.hpp 里自动生成的扇区表，构造 STM32Flash 对象。\n2. 在 STM32Flash 之上创建一个 Database 对象。\n3. 定义一个 Database::Key<T>，在 app_main() 中读写这个键，验证“写入后复位仍然存在”。\n## 二、认识 flash_map.hpp：Flash 扇区映射表\n1. 打开 User/flash_map.hpp，可以看到类似内容：\n   - MCU 型号说明。\n   - 包含 main.h 和 stm32_flash.hpp。\n   - constexpr LibXR::FlashSector FLASH_SECTORS[] = {...};\n   - constexpr size_t FLASH_SECTOR_NUMBER = sizeof(FLASH_SECTORS) / sizeof(LibXR::FlashSector);\n2. 概念：\n   - FlashSector：表示 Flash 中一个扇区（起始地址 + 大小）。\n   - FLASH_SECTORS：把所有可用扇区按顺序放在一个数组里。\n   - FLASH_SECTOR_NUMBER：扇区总数。\n3. 这个文件是自动生成的：\n   - 不需要手动修改。\n   - 只需要在 app_main.cpp 里直接使用 FLASH_SECTORS 和 FLASH_SECTOR_NUMBER 即可。\n## 三、在 app_main() 中创建 STM32Flash 对象\n1. 打开 User/app_main.cpp。\n2. 确认已经包含 flash_map.hpp，如无则添加：#include \"flash_map.hpp\"。\n3. 在 app_main() 中、各外设对象附近添加：\n   - STM32Flash flash(FLASH_SECTORS, FLASH_SECTOR_NUMBER);\n   - 第 1 个参数：扇区数组；第 2 个参数：扇区总数；\n   - 可选第 3 个参数是“数据库起始扇区编号”，不写时默认使用最后两个扇区作为数据库区域。\n## 四、选择数据库类型：DatabaseRaw vs DatabaseRawSequential\n1. 如果是 STM32F1 / F4 等常见型号：\n   - 使用 DatabaseRaw<4>：写入粒度 4 字节。\n   - 示例：LibXR::DatabaseRaw<4> database(flash);\n2. 如果是 STM32G4 / L4 等不支持“逆序写入”的型号：\n   - 使用 DatabaseRawSequential：LibXR::DatabaseRawSequential database(flash, 128);\n3. 建议把 database 和 flash 写在一起，方便在 app_main() 中使用。\n## 五、定义一个键：用 Flash 记住“开机次数”\n1. 在 app_main() 中、database 附近定义键：\n   - LibXR::Database::Key<uint32_t> boot_count(database, \"boot_count\", 0u);\n2. 在 app_main() 初始化阶段（主循环之前）：\n   - boot_count.Load();  // 从 Flash 加载当前值，若不存在则使用默认值 0。\n   - uint32_t current = static_cast<uint32_t>(boot_count);\n   - boot_count.Set(current + 1);  // 每次上电或复位时自增并写回 Flash。\n3. 可选：通过串口打印当前开机次数：\n   - LibXR::STDIO::Printf(\"Boot count = %lu\\r\\n\", (unsigned long)static_cast<uint32_t>(boot_count));\n## 六、构建、下载并验证 Flash 数据库\n1. 构建工程，确认 STM32Flash / Database / Key 相关代码无编译错误。\n2. 下载程序到开发板并运行，打开串口或终端。\n3. 观察输出：\n   - 第一次运行：Boot count = 1（或 0 → 1）。\n   - 按复位键再次运行：Boot count 递增为 2、3...\n说明：\n- 复位 / 重新上电不会擦除数据库扇区，值会累积。\n- 若重新下载固件且执行“全擦除”，数据库会被清空，计数从默认值重新开始。\n## 七、可选延伸：用终端命令读写数据库键值\n- 如果已经开启 Terminal + RamFS，可以：\n  - 在 RamFS 中创建一个可执行文件。\n  - 在里面读写 boot_count，并把结果打印出来。\n  - 通过终端命令触发执行，查看键值变化。\n## 完成标准\n- 在 app_main.cpp 中正确创建 STM32Flash 对象和 Database 对象（DatabaseRaw<4> 或 DatabaseRawSequential）。\n- 定义了至少一个 Database::Key<T>，并在 app_main() 中完成“加载 → 修改 → Set 写回”的基本流程。\n- 通过串口输出等方式，成功观察到某个值在复位后仍然保持；对于“开机计数”的示例，数值应随复位次数递增。\n- 能说明：\n  - flash_map.hpp 是自动生成的扇区映射表。\n  - STM32Flash 封装了对这些扇区的访问。\n  - Database 负责在 Flash 上做键值存储。\n  - Database::Key<T> 让你用“变量 + Set()”的方式读写键值，实际数据保存在 Flash 中。",
-                    "link": "https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-flash",
-                    "estimateMinutes": 25
-                },
-                {
-                    "id": "mcu_newbie_periph_review",
-                    "title": "小结：外设封装 / USB 串口 / 终端 / Flash 数据库 的整体图",
-                    "desc": "## 本任务目标\n- 把本章出现的几块内容（更多外设、USB 串口与 I/O 抽象、终端 + RamFS、Flash 数据库）放在一张“脑内总图”里，而不是四个互不相干的小 demo。\n- 明确一套可重复使用的套路：\n  - 想加一个能力时，应该先改哪里（CubeMX / 配置 / 代码）。\n  - 应该看哪类文档。\n  - 以及如何在 app_main() 的 User Code 里做最小验证。\n## 一、你已经接触过哪些“新东西”？\n- 更多外设封装（ADC / SPI / I2C / PWM / CAN 等）：\n  - CubeMX：配置外设、IO、DMA、中断。\n  - LibXR STM32XXX 封装类：STM32ADC、STM32SPI、STM32I2C 等。\n  - 抽象层：basic_coding/driver/ 下的 ADC、SPI、I2C 等基类。\n- USB 串口与统一 I/O 抽象：\n  - 硬件串口：STM32UART + DMA + 中断。\n  - USB CDC：XRUSB + CDCUart。\n  - 统一层：ReadPort / WritePort + Operation，RawData / ConstRawData 封装缓冲区。\n- 终端（Terminal）+ RamFS：\n  - 终端：命令行解释器，跑在某个 ReadPort / WritePort 上。\n  - RamFS：内存文件系统，保存可执行文件、配置、设备节点等。\n- Flash 数据库（Database）：\n  - 底层：STM32Flash（使用 flash_map.hpp 的扇区布局）。\n  - 中间：DatabaseRaw / DatabaseRawSequential。\n  - 上层：Database::Key<T> 这种类型安全键。\n## 二、共同套路：配置 → 生成 → 找对象 → User Code 里试用\n1. 改配置（CubeMX / YAML）：\n- 外设：CubeMX 里打开对应外设（GPIO / ADC / SPI / I2C / UART / USB / CAN 等），打开中断 / DMA。\n- 中间件 / 高级行为：在 .config.yaml / libxr_config.yaml 中配置终端、USB、Flash 数据库等行为。\n2. 重新生成（CodeGenerator）：\n- 在工程根目录跑 xr_cubemx_cfg -d .，刷新 .config.yaml、app_main.cpp、flash_map.hpp 等。\n3. 找对象（app_main.cpp / flash_map.hpp）：\n- 在 app_main.cpp 中搜索 STM32ADC / STM32SPI / STM32I2C / STM32UART / CDCUart / Terminal / RamFS / Database 等对象。\n- 在 flash_map.hpp 中确认 Flash 扇区布局。\n4. 在 User Code 里写最小实验：\n- GPIO：点灯 / 读按键。\n- UART / USB：打印一行字符串。\n- SPI / I2C：读 WHO_AM_I。\n- Terminal：输入一条命令有回显。\n- Database：写一个计数或配置，复位后仍然保留。\n## 三、如何给“新外设 / 新中间件”开路？\n1. 先问：“这是外设还是中间件？”\n- 外设：先看 code_gen/stm32 + basic_coding/driver。\n- 中间件（终端 / 数据库 / 事件 / 日志等）：先看 basic_coding/middleware。\n2. 再问：“配置在哪改？”\n- STM32 引脚、时钟、DMA、中断 → CubeMX。\n- LibXR 行为（buffer、队列长度、是否启用终端 / USB / Database 等） → YAML 配置。\n3. 最后问：“能不能先做一个最小 demo？”\n- ADC：读一次并打印一个数。\n- I2C：读一个寄存器值。\n- UART / USB：打印一行字符串。\n- Terminal：输入一条命令有回显。\n- Database：写一个值，复位后读回来。\n## 四、文档和 API 的使用习惯\n建议固定一个查资料顺序：\n1. 当前路线里的任务说明：\n   - 优先看当前节的说明和示例，通常已经筛过重点。\n2. XRobot / LibXR 文档：\n   - code_gen/stm32/...：看“CubeMX + YAML 怎么生成代码”。\n   - basic_coding/driver/...：看“外设抽象类有哪些接口”。\n   - basic_coding/middleware/...：看“终端、数据库、事件等中间件行为和用法”。\n3. C++ API 索引：https://jiu-xiao.github.io/libxr/\n   - 搜索类名（STM32UART、STM32Flash、Database、Terminal、RamFS 等），看函数签名与注释。\n4. GitHub README 与示例：\n   - 不确定某仓库负责什么时，看 README 即可；\n   - 有时能找到最小用法片段直接参考。\n## 五、心理建设：你不需要一次记住所有 API\n这一章出现的新名词很多（SPI / I2C / RawData / Operation / Terminal / RamFS / Database...），记不住是正常的：\n- 不需要背所有类名和函数名。\n- 关键是：\n  - 大概知道它们“干什么”。\n  - 知道“要用的时候去哪查、查哪类文档”。\n只要这两点清楚，反复查几次后，自然会变成熟面孔。\n## 完成标准\n- 能用自己的话回答：\n  - 如果要新增一个外设（比如 I2C + 某个传感器），打算先在哪改配置，然后在哪跑生成，最后在 app_main() 的哪个区域实验？\n  - 外设相关问题，应先看 code_gen/stm32 还是 basic_coding/driver？\n  - 终端 / RamFS / Database 这类“中间件”，大概负责哪一层的工作？\n- 接受这样一个事实：\n  - 不可能一次性记住 LibXR 的所有 API。\n  - 但你已经有了一套可重复使用的套路：\n    - 改配置 → 重新生成 → 找对象 → 在 User Code 里做最小实验 → 看不懂就回文档 / API 查。",
-                    "link": "",
-                    "estimateMinutes": 10
-                }
-            ],
-            "next": "os_api_basics"
+        {
+          "id": "mcu_newbie_env_board_debugger",
+          "title": "准备并连接 STM32 开发板与调试器",
+          "link": "",
+          "estimateMinutes": 10,
+          "descMd": "md/mcu_newbie_env/mcu_newbie_env_board_debugger.md"
+        },
+        {
+          "id": "mcu_newbie_env_stm32_vscode_gcc",
+          "title": "在 Windows 上配置 STM32 + VS Code 开发环境",
+          "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-stm32",
+          "estimateMinutes": 20,
+          "descMd": "md/mcu_newbie_env/mcu_newbie_env_stm32_vscode_gcc.md"
+        },
+        {
+          "id": "mcu_newbie_code_gen_stm32",
+          "title": "使用 xr_cubemx_cfg 生成 STM32 初始化代码",
+          "link": "https://xrobot-org.github.io/docs/code_gen/stm32",
+          "estimateMinutes": 15,
+          "descMd": "md/mcu_newbie_env/mcu_newbie_code_gen_stm32.md"
         }
+      ],
+      "next": "mcu_newbie_basics"
+    },
+    "mcu_newbie_basics": {
+      "type": "task",
+      "title": "MCU · 新手 · 第一个 LibXR 工程（点灯 + 串口）",
+      "subtitle": "从自动生成工程，到真正点亮板子、打出第一行串口日志",
+      "tags": [
+        "MCU",
+        "新手",
+        "LibXR",
+        "STM32"
+      ],
+      "tasks": [
+        {
+          "id": "mcu_newbie_basics_read_app_main",
+          "title": "认识生成后的 LibXR 工程并接入 app_main()",
+          "link": "",
+          "estimateMinutes": 15,
+          "descMd": "md/mcu_newbie_basics/mcu_newbie_basics_read_app_main.md"
+        },
+        {
+          "id": "mcu_newbie_basics_blink_led",
+          "title": "在 app_main() 中用 LibXR GPIO 实现第一个 LED 闪烁",
+          "link": "",
+          "estimateMinutes": 20,
+          "descMd": "md/mcu_newbie_basics/mcu_newbie_basics_blink_led.md"
+        },
+        {
+          "id": "mcu_newbie_basics_button_exti_pwm",
+          "title": "按键输入 → 外部中断 → PWM：在同一工程上逐步扩展",
+          "link": "https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-gpio",
+          "estimateMinutes": 30,
+          "descMd": "md/mcu_newbie_basics/mcu_newbie_basics_button_exti_pwm.md"
+        },
+        {
+          "id": "mcu_newbie_basics_uart_hw",
+          "title": "硬件串口：用 LibXR 发送简单文本（初识 I/O 操作模型）",
+          "link": "https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-uart",
+          "estimateMinutes": 30,
+          "descMd": "md/mcu_newbie_basics/mcu_newbie_basics_uart_hw.md"
+        },
+        {
+          "id": "mcu_newbie_basics_review",
+          "title": "小结：从 CubeMX 到 app_main 的完整链路和学习方法",
+          "link": "",
+          "estimateMinutes": 10,
+          "descMd": "md/mcu_newbie_basics/mcu_newbie_basics_review.md"
+        }
+      ],
+      "next": "mcu_newbie_periph"
+    },
+    "mcu_newbie_periph": {
+      "type": "task",
+      "title": "MCU · 新手 · 外设与基础中间件（USB 串口 / 命令行 / 数据库）",
+      "subtitle": "在已有 LibXR 工程上，扩展更多 I/O 能力和参数管理手段",
+      "tags": [
+        "MCU",
+        "新手",
+        "LibXR",
+        "STM32",
+        "USB",
+        "终端",
+        "数据库"
+      ],
+      "tasks": [
+        {
+          "id": "mcu_newbie_periph_overview",
+          "title": "其他外设与基础中间件：能力与文档入口",
+          "link": "https://xrobot-org.github.io/docs",
+          "estimateMinutes": 60,
+          "descMd": "md/mcu_newbie_periph/mcu_newbie_periph_overview.md"
+        },
+        {
+          "id": "mcu_newbie_periph_usb_terminal",
+          "title": "USB 串口与终端：通过配置启用 Terminal + RamFS 命令行",
+          "link": "https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-uart",
+          "estimateMinutes": 25,
+          "descMd": "md/mcu_newbie_periph/mcu_newbie_periph_usb_terminal.md"
+        },
+        {
+          "id": "mcu_newbie_periph_flash_db",
+          "title": "使用 Flash 数据库存储简单配置参数",
+          "link": "https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-flash",
+          "estimateMinutes": 25,
+          "descMd": "md/mcu_newbie_periph/mcu_newbie_periph_flash_db.md"
+        },
+        {
+          "id": "mcu_newbie_periph_review",
+          "title": "小结：外设封装 / USB 串口 / 终端 / Flash 数据库 的整体图",
+          "link": "",
+          "estimateMinutes": 10,
+          "descMd": "md/mcu_newbie_periph/mcu_newbie_periph_review.md"
+        }
+      ],
+      "next": "os_api_basics"
     }
+  }
 }

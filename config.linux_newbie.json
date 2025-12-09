@@ -1,88 +1,88 @@
 {
-    "nodes": {
-        "linux_newbie_env": {
-            "type": "task",
-            "title": "Linux · 新手 · 环境与分层",
-            "subtitle": "从 Linux 视角理解 LibXR 在整个体系中的位置，搞清楚这一条路线在做什么。",
-            "tags": [
-                "Linux",
-                "新手",
-                "LibXR"
-            ],
-            "tasks": [
-                {
-                    "id": "linux_newbie_env_read_overview",
-                    "title": "【重要】LibXR 在 Linux 平台上的分层与职责",
-                    "desc": "## 相关文档（可选阅读，仅作参考）\n- 环境配置总览：https://xrobot-org.github.io/docs/env_setup\n- Linux 环境配置：https://xrobot-org.github.io/docs/env_setup/env-setup-linux\n- LibXR 仓库 README（库本体说明）：https://github.com/Jiu-xiao/libxr/blob/master/README.zh-CN.md\n以上文档内容较完整，本任务不要求全部看懂，只作为需要时查细节的“说明书”。\n\n## 本任务说明\n本节只需要“看懂和想清楚”，**不需要**在电脑上执行任何命令，也不需要创建工程。\n目标是从 **Linux 应用开发者** 的视角，在脑中先形成一套清晰的**整体图景**：\n- Linux 本身负责什么？\n- LibXR 在 Linux 上补了哪些能力？\n- Python 侧的 CodeGenerator / xrobot 处在什么位置、在这条 Linux · 新手路线里为什么可以先完全不管。\n\n## 本任务目标\n- 弄清在 Linux 平台上：底层是 Linux 内核 + C++ 运行时，中间是 LibXR，上层是你的应用代码，各自大致负责什么。\n- 搞明白：在这条 “Linux · 新手” 路线里，只需要把 LibXR 当作一个普通的 C++ 库来用，不使用 CodeGenerator，pip 安装的 libxr 包在这里不是必需品。\n- 对“以后大概要用到哪些类型的工具”有一个粗略印象（编译器、构建工具、调试器、可选的 Python 环境等），具体安装步骤留给下一个任务。\n\n## 整体图景：从 Linux 内核到 LibXR 应用\n在 Linux · 新手 路线上，可以把整个体系想象成一条自下而上的链路：\n- 最底层：硬件 + Linux 内核 + C 运行时（例如 glibc）。\n- 再上层是一套 C++ 开发工具链：\n  - C/C++ 编译器（如 g++ / clang）；\n  - 构建系统（如 CMake 及其后端）；\n  - 调试器和常用工具（如 gdb、git 等）。\n- 再往上，是作为 **C++ 源码库** 的 LibXR：\n  - 你会在工程里把它当作第三方库或子目录，引入到自己的 CMake 项目中一起编译；\n  - 在 Linux 下，LibXR 内部通过 pthread、定时器、文件等系统调用实现线程、同步原语、时间、I/O 等能力，对外暴露统一的 C++ 接口。\n- 最上层，是你的业务代码：命令行工具、守护进程、仿真环境或上位机程序，直接调用 LibXR 提供的线程、同步原语、定时器、日志、终端、数据库等接口。\n\n一句话概括这条路线的定位：\n> 在 Linux 上写的是“普通 C++ 程序”，只是尽量通过 LibXR 统一使用线程 / 同步 / 定时器 / I/O / 中间件，\n> 这样将来如果需要把部分逻辑迁到其他平台，可以复用更多代码。\n\n## LibXR / CodeGenerator / XRobot 在 Linux 场景下的关系\n这一节只关心“Linux + LibXR”这个组合，但有必要顺带说明一下生态里的另外两个名词：\n\n- **LibXR（C++ 库本体）**：\n  - 是本路线的核心，你会把它当作 C++17 库来使用；\n  - 在 Linux 上，它通过 system=Linux 的实现层封装线程、定时器、同步原语、日志、终端、数据库等。\n\n- **CodeGenerator（Python 工具）**：\n  - 是一个基于 Python 的代码生成工具，用于根据工程配置生成初始化代码和工程骨架；\n  - 在本路线中，你不需要使用 CodeGenerator：我们会直接手写一个小而清晰的 CMake 工程，把 LibXR 当普通 C++ 库来链接；\n  - pip 安装的 `libxr` 包对应的正是这个工具链，而不是你要在 Linux 上链接的 C++ 库本身，所以在这里可以完全忽略。\n\n- **xrobot（Python 包）与 XRobot 体系**：\n  - xrobot 是与 XRobot 相关的 Python 工具包，用于项目管理、模块管理、配置等；\n  - 它可以在 Linux 上发挥作用，但对“先在 Linux 上学会直接使用 LibXR 写 C++ 程序”不是前置条件；\n  - 在这条 Linux · 新手路线中，你可以暂时只把它当作“将来可能会用到的另外一层”，不需要安装也不需要理解细节。\n\n可以简单记住：\n> 这一条 Linux · 新手路线只聚焦在 “C++ 版 LibXR + 你的 C++ 工程” 这一块。\n> Python 侧的 CodeGenerator / xrobot 处于同一生态，但与本路线解耦，你现在完全可以不去管它们。\n\n## 本节暂时不用做的事情\n- 不需要执行任何安装命令（例如 apt、pip、pipx 等）。\n- 不需要拉取 LibXR 代码或创建工程目录。\n- 不需要安装或使用任何 Python 包（包括 libxr 和 xrobot）。\n以上这些具体操作，会在后续的“Linux 实际环境配置 / 第一个工程”任务中单独说明。\n\n## 完成标准\n- 你能用自己的话说出：在 Linux 上使用 LibXR，本质上是“写普通 C++ 程序，并把 LibXR 当作一个跨平台 C++ 库来链接”。\n- 你清楚：这一条 Linux · 新手路线只关注 LibXR 的 C++ 用法，不依赖 CodeGenerator，也不需要 pip 安装的 libxr 包；\n- 你知道：具体的安装命令、代码拉取和 CMake 配置会在下一个任务里讲，这一节只负责帮你把“LibXR 在 Linux 上处于哪一层”这件事情想清楚。",
-                    "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
-                    "estimateMinutes": 15
-                },
-                {
-                    "id": "linux_newbie_env_setup",
-                    "title": "Linux 环境配置：编译器 / VS Code / Git",
-                    "desc": "## 本任务目标\n- 在当前 Linux 上准备好后续开发要用的基础工具：gcc/g++、CMake、ninja、gdb、Python3、pip/pipx、Git。\n- 安装 VS Code，并确认可以正常启动。\n- 先只把环境打底，不拉 LibXR、不创建工程。\n\n## 步骤 1：安装系统级开发工具（以 Ubuntu/Debian 为例）\n在终端执行：\n```bash\nsudo apt update\nsudo apt install -y \\\n  git \\\n  gcc g++ \\\n  cmake ninja-build \\\n  gdb \\\n  python3 python3-pip pipx \\\n  tar xz-utils wget \\\n  libudev-dev libnm-dev libwpa-client-dev\n```\n安装完成后，用下面这些命令简单检查是否可用（只要能看到版本号即可）：\n```bash\ng++ --version\ncmake --version\nninja --version\ngdb --version\npython3 --version\npip3 --version\npipx --version\ngit --version\n```\n> 说明：这里安装的是通用开发环境，本路线当前阶段不会用 `pip install libxr`，因为那是 CodeGenerator 的 Python 包。\n\n## 步骤 2：安装 VS Code\n- 从 VS Code 官网下载适合你发行版的安装包（例如 `.deb` 或 `.rpm`）。\n- 使用系统包管理器安装（例如在 `.deb` 所在目录执行：`sudo apt install ./code_*.deb`）。\n- 安装完成后，在终端输入 `code`，确认 VS Code 能正常启动即可，本节不强制安装任何扩展。\n\n## 步骤 3：配置 Git 基本信息\n在终端执行：\n```bash\ngit config --global user.name \"你的名字\"\ngit config --global user.email \"your_email@example.com\"\n```\n然后用下面命令确认设置生效：\n```bash\ngit config --list\n```\n看到刚设置的 user.name / user.email 即可。\n\n## 完成标准\n- 终端中 `g++ --version`、`cmake --version`、`ninja --version`、`gdb --version`、`python3 --version`、`git --version` 都能正常输出版本号。\n- 可以启动 VS Code（无论是终端输入 `code` 还是用图形界面打开）。\n- Git 已设置好全局用户名和邮箱。\n- 尚未拉取 LibXR 代码、也未创建任何 CMake 工程，只是把环境准备好，为后续任务做铺垫。",
-                    "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
-                    "estimateMinutes": 20
-                },
-                {
-                    "id": "linux_newbie_basics_hello_cmake",
-                    "title": "第一个 LibXR CMake 工程：Hello LibXR（Linux）",
-                    "desc": "## 本任务目标\n- 在本地新建一个最小的 CMake 工程目录。\n- 把 LibXR 作为子目录引入，成功编译并链接生成可执行文件。\n- 运行后在终端里看到周期输出的 “Hello LibXR on Linux”。\n\n本任务只做一件事：搭一个足够简单、可复用的骨架，确认 “CMake + LibXR + 你的代码” 这条链路是通的。\n\n---\n\n## 目录结构预览\n本任务结束时，工程目录大致应为：\n\n- `~/dev/xr_hello_linux/`\n  - `CMakeLists.txt`  ← 顶层 CMake 配置\n  - `User/`\n    - `main.cpp`      ← 你的入口代码\n  - `libxr/`         ← LibXR 源码（通过 git clone 得到）\n\n下面的步骤会按时间顺序告诉你：**在哪一步创建哪个目录和文件**。\n\n---\n\n## 步骤 1：创建工程目录和 User 目录\n1. 在终端中选一个你喜欢的工作目录，例如 `~/dev`：\n```bash\nmkdir -p ~/dev\ncd ~/dev\n```\n\n2. 创建本任务用的工程目录，并进入：\n```bash\nmkdir -p xr_hello_linux\ncd xr_hello_linux\n```\n\n3. 在工程目录下创建 `User` 子目录，用来放你自己的源文件：\n```bash\nmkdir -p User\n```\n\n此时的目录结构是：\n- `~/dev/xr_hello_linux/`\n  - `User/`\n\n（`CMakeLists.txt` 和 `libxr/` 稍后再创建。）\n\n---\n\n## 步骤 2：拉取 LibXR 源码到 libxr 目录\n> 本步骤只拉 C++ 版 LibXR 源码，不涉及任何 Python 包安装。\n\n1. 确保当前仍在工程根目录：\n```bash\ncd ~/dev/xr_hello_linux\n```\n\n2. 将 LibXR 仓库克隆到名为 `libxr` 的子目录：\n```bash\ngit clone https://github.com/Jiu-xiao/libxr.git libxr\n```\n\n执行完成后，目录结构变为：\n- `~/dev/xr_hello_linux/`\n  - `User/`\n  - `libxr/`  ← 里面是 LibXR 的 C++ 源码及其自带的 CMake 配置\n\n---\n\n## 步骤 3：在 User 目录中创建 main.cpp\n1. 确保当前仍在工程根目录：\n```bash\ncd ~/dev/xr_hello_linux\n```\n\n2. 在 `User` 目录下创建 `main.cpp` 文件（用你喜欢的编辑器，如 `code` / `vim`）：\n```bash\ncode User/main.cpp\n```\n\n3. 将下面的示例代码写入 `User/main.cpp`：\n\n```cpp\n#include \"libxr.hpp\"\n#include \"libxr_system.hpp\"\n#include \"thread.hpp\"\n\nint main(int, char **) {\n  // 初始化 LibXR 的平台层（在 Linux 上会准备内部线程、时间基准等）\n  LibXR::PlatformInit();\n\n  // 简单循环：每秒打印一行\n  while (true) {\n    LibXR::STDIO::Printf(\"Hello LibXR on Linux\\n\");\n    LibXR::Thread::Sleep(1000);  // 约 1000 ms\n  }\n\n  return 0;\n}\n```\n\n保存并退出编辑器。\n\n---\n\n## 步骤 4：在工程根目录创建 CMakeLists.txt\n1. 确保当前在工程根目录：\n```bash\ncd ~/dev/xr_hello_linux\n```\n\n2. 创建顶层 `CMakeLists.txt` 文件：\n```bash\ncode CMakeLists.txt\n```\n\n3. 将下面的配置写入 `CMakeLists.txt`：\n\n```cmake\ncmake_minimum_required(VERSION 3.10)\nproject(xr_hello_linux LANGUAGES CXX)\n\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\n\n# 导出编译命令以便 clangd 等工具使用\nset(CMAKE_EXPORT_COMPILE_COMMANDS ON)\n\n# 引入 LibXR 源码（假设就在 libxr 子目录）\nadd_subdirectory(libxr)\n\n# 我们自己的可执行程序\nadd_executable(${PROJECT_NAME}\n    User/main.cpp\n)\n\n# 链接 LibXR 提供的 xr 库\ntarget_link_libraries(${PROJECT_NAME}\n    PRIVATE xr\n)\n\n# 把 LibXR 的头文件路径和 User 目录也加入包含路径\ntarget_include_directories(${PROJECT_NAME}\n    PRIVATE $<TARGET_PROPERTY:xr,INTERFACE_INCLUDE_DIRECTORIES>\n    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/User\n)\n```\n\n保存并退出编辑器。\n\n此时完整目录结构应为：\n- `~/dev/xr_hello_linux/`\n  - `CMakeLists.txt`\n  - `User/`\n    - `main.cpp`\n  - `libxr/`\n\n---\n\n## 步骤 5：使用 CMake 配置与编译\n1. 在工程根目录中创建并使用 `build` 目录：\n```bash\ncd ~/dev/xr_hello_linux\ncmake -S . -B build\ncmake --build build\n```\n\n- 第一条命令会在 `build/` 目录里生成构建配置；\n- 第二条命令会实际编译，生成可执行文件。\n\n如果过程中没有报错，`build/` 目录下应出现一个名为 `xr_hello_linux` 的可执行文件（名字来自 `project(xr_hello_linux ...)`）。\n\n---\n\n## 步骤 6：运行程序\n1. 仍在工程根目录，执行：\n```bash\ncd ~/dev/xr_hello_linux\n./build/xr_hello_linux\n```\n\n2. 如果一切正常，你应该在终端里看到类似这样的输出，每秒一行：\n\n```text\nHello LibXR on Linux\nHello LibXR on Linux\nHello LibXR on Linux\n...\n```\n\n3. 使用 `Ctrl+C` 结束程序。\n\n---\n\n## 完成标准\n- 工程目录结构为：顶层 `CMakeLists.txt` + `User/main.cpp` + `libxr/` 源码目录。\n- 能用 `cmake -S . -B build` 成功配置，用 `cmake --build build` 成功编译。\n- 能运行 `./build/xr_hello_linux`，并在终端中看到周期输出的 “Hello LibXR on Linux”。\n- 理解以后要在 Linux 上写更复杂的逻辑，只需要在这个工程骨架上继续添加源文件和依赖即可。",
-                    "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
-                    "estimateMinutes": 30
-                },
-                {
-                    "id": "linux_newbie_basics_debug",
-                    "title": "在 VS Code 中调试第一个 LibXR 程序",
-                    "desc": "## 本任务目标\n- 使用 VS Code 打开上一节创建的 `xr_hello_linux` 工程。\n- 安装并启用 clangd / CMake Tools / CodeLLDB 三个插件。\n- 在 CMake 中打开调试信息（`-g`），用 VS Code 的 CMake Tools 完成编译。\n- 使用 CodeLLDB 调试器，按 F5 启动调试，让程序在 `main` 函数处停下。\n\n本节开始之后，构建流程统一通过 **VS Code + CMake Tools** 完成，不再使用命令行手动调用 `cmake` / `cmake --build`。\n\n---\n\n## 前置条件\n- 已完成 “Hello LibXR（Linux）” 任务，工程目录结构为：\n  - `xr_hello_linux/`\n    - `CMakeLists.txt`\n    - `User/main.cpp`\n    - `libxr/`\n    - `build/`（之前已经成功编译过一次）。\n\n---\n\n## 步骤 1：在终端安装 clangd\n在终端中执行（以 Ubuntu/Debian 为例）：\n```bash\nsudo apt update\nsudo apt install -y clangd\n```\n安装完成后可简单检查：\n```bash\nclangd --version\n```\n看到版本号即可。\n\n---\n\n## 步骤 2：用 VS Code 打开工程并安装插件\n1. 在终端进入工程根目录：\n```bash\ncd ~/dev/xr_hello_linux   # 按你的实际路径调整\ncode .\n```\n\n2. 在 VS Code 左侧「扩展」(Extensions) 面板中搜索并安装：\n- **clangd**（C/C++ 语言服务）\n- **CMake Tools**\n- **CodeLLDB**\n\n3. 安装完成后 **重启 VS Code**，再次用 `code .` 打开 `xr_hello_linux` 目录。\n\n4. 打开任意 `.cpp` 文件，确认：\n- 代码有高亮、跳转和补全（clangd 生效）；\n- 窗口底部状态栏出现 CMake 相关区域（例如「Configure」「Build」按钮或齿轮图标）。\n\n---\n\n## 步骤 3：第一次用 CMake Tools 配置工程\n1. 在 VS Code 底部状态栏找到 CMake Tools 区域（通常有一个显示当前 Kit/工具链的按钮）。\n2. 第一次使用时会提示选择编译工具链（Kit），例如：\n- `GCC ...` 或 `Clang ...` 之类的选项。\n选择你系统中可用的编译器即可（一般选 GCC）。\n\n3. 选择好 Kit 后，点击状态栏中的 **Configure**（配置）按钮：\n- CMake Tools 会自动调用 CMake，在工程中生成或更新 `build` 目录；\n- 过程完成后，状态栏会显示当前的构建类型（例如 Debug）。\n\n4. 点击状态栏中的 **Build**（构建）按钮：\n- CMake Tools 会在 `build/` 目录中编译工程；\n- 终端面板中可以看到构建输出。\n\n> 之后如果只需要“重新编译”，只要点击状态栏的 Build 按钮即可，不再手动敲命令行。\n\n---\n\n## 步骤 4：为调试启用 `-g` 并通过 VS Code 重新构建\n1. 在 VS Code 中打开工程根目录下的 `CMakeLists.txt`。\n2. 在 `set(CMAKE_CXX_STANDARD ...)` 附近添加一行编译选项：\n```cmake\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\n\nadd_compile_options(-g)\n```\n\n3. 保存 `CMakeLists.txt`。\n\n4. 回到底部状态栏：\n- 先点击 **Configure** 让 CMake 重新配置工程；\n- 再点击 **Build** 重新构建。\n\n这样生成的 `build/xr_hello_linux` 就带有调试信息，可用于断点调试。\n\n---\n\n## 步骤 5：用 CodeLLDB 生成 launch.json\n1. 在 VS Code 左侧点击「运行和调试」(Run and Debug) 图标。\n2. 如果还没有调试配置，点击「运行和调试」按钮，在弹出的选择中选 **CodeLLDB**：\n- VS Code 会在工程根目录下自动生成 `.vscode/launch.json` 文件。\n\n3. 打开 `.vscode/launch.json`，找到 CodeLLDB 对应的配置项（`\"type\": \"lldb\"`）。\n\n4. 把 `program` 字段改为指向我们编译出来的可执行文件：\n```jsonc\n\"program\": \"${workspaceRoot}/build/xr_hello_linux\",\n```\n\n5. 在同一个配置中加入以下字段，确保启动调试时会在 `main` 函数处自动停下：\n```jsonc\n\"initCommands\": [\n  \"breakpoint set -n main -N entry\"\n],\n\"exitCommands\": [\n  \"breakpoint delete entry\"\n]\n```\n\n一个典型配置片段示例（只示意关键字段）：\n```jsonc\n{\n  \"version\": \"0.2.0\",\n  \"configurations\": [\n    {\n      \"name\": \"Debug xr_hello_linux (CodeLLDB)\",\n      \"type\": \"lldb\",\n      \"request\": \"launch\",\n      \"program\": \"${workspaceRoot}/build/xr_hello_linux\",\n      \"cwd\": \"${workspaceRoot}\",\n      \"initCommands\": [\n        \"breakpoint set -n main -N entry\"\n      ],\n      \"exitCommands\": [\n        \"breakpoint delete entry\"\n      ]\n    }\n  ]\n}\n```\n\n保存 `launch.json`。\n\n---\n\n## 步骤 6：在 VS Code 中启动调试\n1. 确认刚才使用 CMake Tools 的 Build 已经成功（底部状态栏无错误提示）。\n2. 打开「运行和调试」侧栏，在上方下拉列表中选择：\n- `Debug xr_hello_linux (CodeLLDB)`（或你刚才看到的配置名称）。\n\n3. 按下 **F5**，或点击绿色三角形按钮启动调试：\n- 调试器启动后，会先加载程序，然后在 `main` 函数处自动停下；\n- 你应该在编辑器里看到 `main` 的第一行被高亮，左侧可单步执行（F10/F11），下方可以查看变量和调用栈。\n\n4. 点击「继续」（F5），程序会开始运行，终端中每秒打印一行 `Hello LibXR on Linux`。\n\n---\n\n## 完成标准\n- VS Code 已安装并启用 clangd / CMake Tools / CodeLLDB，C++ 代码有补全和跳转，底部状态栏可以看到 CMake 工具栏和 Build 按钮。\n- `CMakeLists.txt` 中添加了 `add_compile_options(-g)`，通过 VS Code 的 CMake Tools 完成 Configure + Build。\n- `.vscode/launch.json` 中的 `program` 指向 `${workspaceRoot}/build/xr_hello_linux`，并配置了 `initCommands` / `exitCommands` 以在 `main` 停下。\n- 在 VS Code 中按 F5 能启动调试，程序在 `main` 函数第一行暂停，之后可以单步或继续运行。\n",
-                    "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
-                    "estimateMinutes": 25
-                },
-                {
-                    "id": "linux_newbie_env_review",
-                    "title": "小结：从环境到第一个可调试的 LibXR 工程",
-                    "desc": "## 本任务目标\n- 回顾这一段 Linux · 新手路线目前为止做了哪些事情，从“只看概念”走到了“能在 VS Code 里调试一个真程序”。\n- 把几件事串成一条清晰的整体脉络：环境 → 工程骨架 → 调试。\n- 想一想以后要扩展功能（线程 / 同步 / 终端 / 数据库等）时，大概会改动哪些位置。\n\n本节不需要写新代码，主要是回顾和梳理。如果愿意，可以顺手再跑一遍构建和调试，当作自查。\n\n---\n\n## 你现在已经具备的东西\n可以先在脑子里过一遍自己已经做过的操作：\n\n- **理解层面**：\n  - 知道在 Linux 上用 LibXR，本质上是在写普通 C++ 程序，只是把 LibXR 当作一个跨平台 C++ 库来链接。\n  - 知道这条路线只关注 C++ 版 LibXR 的用法，不依赖 CodeGenerator，也用不到 `pip install libxr`。\n\n- **环境层面**：\n  - 系统里已经有了 g++/clang、CMake、ninja、gdb、Python3、Git 等基础工具。\n  - VS Code 可以正常启动。\n\n- **工程层面**：\n  - 有一个 `xr_hello_linux` 工程，目录结构大致为：\n    - 顶层 `CMakeLists.txt`；\n    - `User/main.cpp`（你的入口文件）；\n    - `libxr/`（LibXR 源码）；\n    - `build/`（由 CMake 生成）。\n  - 能通过 CMake 把 LibXR 加进来，编译出一个可执行文件。\n  - 程序运行时，会每秒打印一行 `Hello LibXR on Linux`。\n\n- **调试层面**：\n  - VS Code 装好了 clangd / CMake Tools / CodeLLDB 三个插件。\n  - CMake 开启了 `-g` 调试信息。\n  - 可以用 CMake Tools 在 VS Code 里完成 Configure + Build。\n  - `.vscode/launch.json` 配好了 CodeLLDB，F5 能在 `main` 处停下，再继续运行程序。\n\n---\n\n## 把这几步串成一条线\n试着用自己的话，把当前这条线描述一遍：\n\n1. **环境准备**：\n   - Linux 自己提供内核和 C/C++ 运行时；\n   - 你通过包管理器装好了编译器、CMake、调试器等开发工具；\n   - VS Code 装好，用来写代码和进行图形化构建/调试。\n\n2. **接上 LibXR**：\n   - 通过 `git clone` 把 LibXR 源码放在 `libxr/`；\n   - 在顶层 `CMakeLists.txt` 里用 `add_subdirectory(libxr)` 加进来；\n   - 在自己的可执行目标上 `target_link_libraries(... xr)`，并把 LibXR 的头文件路径加入 include 路径。\n\n3. **写一个最小可运行示例**：\n   - 在 `User/main.cpp` 中调用 `LibXR::PlatformInit()` 做平台初始化；\n   - 在一个循环里用 `STDIO::Printf` 打印一行文本，用 `Thread::Sleep` 控制节奏；\n   - 编译运行，确认“库 + 工程 + 代码”这条链路是通的。\n\n4. **让它变成“可调试的程序”**：\n   - 在 CMake 中打开 `-g`；\n   - 用 VS Code 的 CMake Tools 进行 Configure + Build；\n   - 用 CodeLLDB 配好启动配置，让调试器在 `main` 停下；\n   - 按 F5，观察到可以单步 / 继续运行，看到输出。\n\n如果你能不看文档，大致把这几步讲出来，说明当前这部分已经真正消化了。\n\n---\n\n## 遇到问题时，大概从哪几层检查？\n后面你在 Linux 上继续用 LibXR 时，可以按照类似的顺序排查：\n\n1. **环境/工具链层**：\n   - 编译器 / CMake / 调试器是否还在（升级系统之后有时会少包）。\n   - VS Code 插件是否正常工作（尤其是 clangd 和 CMake Tools）。\n\n2. **构建配置层（CMake）**：\n   - `add_subdirectory(libxr)` 是否还在。\n   - 可执行目标是否仍然链接了 `xr` 库。\n   - 是否忘记在新的目标里也加上 LibXR 的 include 路径。\n\n3. **代码层（你的 main / 其他源文件）**：\n   - 是否仍然在合适的位置调用了 `LibXR::PlatformInit()`。\n   - 是否在运行前就崩溃，可以借助调试器在 `main` 开头打断点看调用栈。\n\n4. **调试配置层（VS Code）**：\n   - `launch.json` 中 `program` 路径是否和现在的构建产物一致。\n   - CMake 当前构建类型是不是 Debug，是否带 `-g`。\n\n---\n\n## 接下来可以去做什么？\n在这一节结束后，你已经有了一个能跑、能调试的最小 LibXR 工程，后续在 Linux · 新手 路线中，大概率会往这些方向扩展：\n\n- 在现有工程中增加更多源文件，而不是只写一个 `main.cpp`；\n- 开始使用 LibXR 的线程 / 同步原语，写出更像“真实服务”的结构；\n- 尝试终端、日志、数据库等中间件能力，让这个小程序变得更“好用”和更好排查问题。\n\n这些都可以在当前骨架的基础上逐步添加，而不需要推翻重来。\n\n---\n\n## 完成标准\n- 你能用自己的话顺一遍：从环境安装、创建工程、接入 LibXR、编译运行，到在 VS Code 中单步调试 `main` 的完整流程。\n- 遇到“编译不过 / 跑不起来 / 调不进来”时，能够大致判断是环境问题、构建问题、代码问题还是调试配置问题，而不是完全摸不着头脑。\n- 心里接受这样一件事：后面要学的内容会更丰富，但都会建立在这个简单、清晰的工程骨架之上，而不是再从零搭一次。",
-                    "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
-                    "estimateMinutes": 10
-                }
-            ],
-            "next": "linux_newbie_basics"
+  "nodes": {
+    "linux_newbie_env": {
+      "type": "task",
+      "title": "Linux · 新手 · 环境与分层",
+      "subtitle": "从 Linux 视角理解 LibXR 在整个体系中的位置，搞清楚这一条路线在做什么。",
+      "tags": [
+        "Linux",
+        "新手",
+        "LibXR"
+      ],
+      "tasks": [
+        {
+          "id": "linux_newbie_env_read_overview",
+          "title": "【重要】LibXR 在 Linux 平台上的分层与职责",
+          "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
+          "estimateMinutes": 15,
+          "descMd": "md/linux_newbie_env/linux_newbie_env_read_overview.md"
         },
-        "linux_newbie_basics": {
-            "type": "task",
-            "title": "Linux · 新手 · LibXR 基础循环与终端体验",
-            "subtitle": "在现有 CMake 工程上，用一个布尔量当作“LED”练习循环，再跑起来 LibXR 终端。",
-            "tags": [
-                "Linux",
-                "新手",
-                "LibXR",
-                "Terminal",
-                "RamFS"
-            ],
-            "tasks": [
-                {
-                    "id": "linux_newbie_basics_fake_led",
-                    "title": "用一个布尔量当作“LED”：LibXR 上的第一个循环",
-                    "desc": "## 本任务目标\n- 在现有 `xr_hello_linux` 工程里，用一个 `bool` 变量当作“LED 状态”。\n- 写一个简单循环：每隔一段时间翻转一次这个状态，并用 `LibXR::STDIO::Printf` 打印出来。\n- 先熟悉“状态 + 循环 + Sleep”这一组最基础的用法，后面再上更复杂的东西。\n\n> 说明：LibXR 里面 GPIO 有自己的抽象基类，但对 Linux 新手来说一次性上手会有点重，这一节故意只用一个 `bool`，把注意力放在“写 C++ + 用 LibXR 线程睡眠”上。\n\n## 前置条件\n- 已完成前一节 “Hello LibXR（Linux）”：\n  - 工程目录为 `xr_hello_linux/`。\n  - 顶层 `CMakeLists.txt` 已经引入 `libxr/` 子目录并链接 `xr` 库。\n  - 可以在 VS Code 里用底部的 **Build** 按钮成功构建工程。\n\n## 步骤 1：在 VS Code 中打开工程和 main.cpp\n1. 终端进入工程根目录（路径按你自己的为准）：\n```bash\ncd ~/dev/xr_hello_linux\ncode .\n```\n2. 在 VS Code 左侧资源管理器中展开 `User/`，打开 `main.cpp`。\n\n## 步骤 2：改造 main()，加入一个简单的“LED 状态”\n假设已有的 `main` 只是在循环里打印“Hello LibXR on Linux”，现在我们把它替换成下面这种写法：\n\n```cpp\n#include \"libxr.hpp\"\n#include \"libxr_system.hpp\"\n#include \"thread.hpp\"\n\nint main(int, char**) {\n  LibXR::PlatformInit();\n\n  bool led_on = false;  // 用一个布尔量代表“灯是亮还是灭”\n\n  while (true) {\n    led_on = !led_on;  // 每次循环翻转一次\n\n    LibXR::STDIO::Printf(\"[LED] %s\\n\", led_on ? \"ON\" : \"OFF\");\n\n    LibXR::Thread::Sleep(500);  // 约 500 ms，可以按喜好改长 / 改短\n  }\n\n  return 0;\n}\n```\n\n要点：\n- 不需要任何额外成员、结构体，一个 `bool` 就够用。\n- 真正控制节奏的是 `LibXR::Thread::Sleep`，以后你在任何平台上写循环时，都可以用同样的接口来让线程“睡一会儿”。\n\n## 步骤 3：在 VS Code 中构建并运行\n1. 在 VS Code 底部状态栏找到 CMake Tools 区域：\n   - 点击 **Build**（或“生成”）按钮，等待构建完成即可。\n2. 构建成功后：\n   - 仍然在底部 CMake Tools 区域，点击 **Run**（运行）按钮直接启动刚才构建出来的程序。\n3. 观察 VS Code 下方“终端 / 输出”区域的程序输出，大致会是：\n```text\n[LED] ON\n[LED] OFF\n[LED] ON\n[LED] OFF\n...\n```\n\n## 完成标准\n- 能在 VS Code 中点击 **Build** 顺利构建工程，无编译错误。\n- 能通过底部的 **Run** 按钮启动程序，在输出窗口里看到 `[LED] ON` / `[LED] OFF` 有节奏地交替打印。\n- 你知道这个“LED”只是一个布尔状态，用来练手，真正操作硬件 GPIO 会在 MCU 路线里单独讲。下节开始会在这个工程里继续加东西。",
-                    "link": "https://xrobot-org.github.io/docs",
-                    "estimateMinutes": 15
-                },
-                {
-                    "id": "linux_newbie_basics_terminal_ramfs",
-                    "title": "在 Linux 上启用 LibXR 终端（RamFS 命令行）",
-                    "desc": "## 本任务目标\n- 在 `xr_hello_linux` 工程中加入 RamFS 和 `LibXR::Terminal`，在 Linux 控制台里体验和 MCU 路线同一套终端风格：`ls`、`cd`、历史记录等。\n- 让终端独立跑在一个 LibXR 线程里，主线程不再不停打印 `[LED]`，避免输出互相打架。\n\n后面章节有机会把当前的 `bool led_on` 挂到命令行上，用命令来控制“亮 / 灭”。这节先专注于让终端跑起来。\n\n## 前置条件\n- 已完成上一节“用一个布尔量当作“LED”：LibXR 上的第一个循环”：\n  - 工程仍能在 VS Code 中通过 **Build** 成功构建。\n  - `User/main.cpp` 里已经有 `LibXR::PlatformInit();`，并写过一个使用 `LibXR::Thread::Sleep` 的循环。\n\n## 步骤 1：在 main.cpp 中引入 RamFS 和 Terminal\n1. 打开 `User/main.cpp`。\n2. 在已有的 `#include` 下方补上：\n```cpp\n#include \"ramfs.hpp\"\n#include \"terminal.hpp\"\n```\n\n## 步骤 2：简化主循环，为终端腾出“干净输出”\n为了让命令行输出更清晰，这一节先把之前不停刷 `[LED]` 的循环去掉，只保留一个“保持程序存活”的空循环。可以改成类似下面这样：\n\n```cpp\n#include \"libxr.hpp\"\n#include \"libxr_system.hpp\"\n#include \"thread.hpp\"\n#include \"ramfs.hpp\"\n#include \"terminal.hpp\"\n\nint main(int, char**) {\n  LibXR::PlatformInit();\n\n  // 后面可以用它来表示“LED 当前状态”，本节先不用\n  bool led_on = false;\n\n  // 1. 创建一个内存文件系统\n  LibXR::RamFS ramfs;\n\n  // 2. 基于 RamFS 创建终端对象\n  LibXR::Terminal<1024, 64, 16, 128> terminal(ramfs);\n\n  // 3. 用一个线程跑终端\n  LibXR::Thread term_thread;\n  term_thread.Create(\n      &terminal,\n      LibXR::Terminal<1024, 64, 16, 128>::ThreadFun,\n      \"terminal\",\n      65536,\n      LibXR::Thread::Priority::MEDIUM);\n\n  // 主线程只需要保持活着即可\n  while (true) {\n    LibXR::Thread::Sleep(1000);\n  }\n\n  return 0;\n}\n```\n\n要点：\n- 现在“写很多东西到屏幕”的只有终端自己，之前那种一秒一行 `[LED]` 的打印先停掉，方便你看清命令行。\n- `led_on` 先留在这里。以后可以通过终端命令去改它，这样“LED 的状态”就完全由命令行控制，而不是死循环。\n\n## 步骤 3：在 VS Code 中构建\n1. 点击 VS Code 底部的 **Build** 按钮。\n2. 构建成功即可，无需手动运行 `cmake` / `make` 之类的命令。\n\n若编译失败，优先检查：\n- 是否已经添加了 `#include \"ramfs.hpp\"` 和 `#include \"terminal.hpp\"`。\n- `CMakeLists.txt` 中是否仍然保留：`add_subdirectory(libxr)` 和 `target_link_libraries(... xr)`。\n\n## 步骤 4：运行程序并体验终端\n1. 在 VS Code 底部 CMake Tools 区域点击 **Run** 按钮，启动程序。\n2. 程序跑起来后，你应该在下方的终端/输出中看到终端的提示符（具体长相以 LibXR 当前实现为准，通常会有一个代表当前目录的前缀和一个符号）。\n3. 尝试输入几条命令并回车：\n   - `ls` —— 查看当前 RamFS 中的目录内容。\n   - `cd /`、`cd ..` —— 切换目录。\n   - 使用键盘方向键上下翻动历史命令，体验行编辑和历史记录。\n\n这一节只要求你熟悉终端“有这个东西”、“大致长什么样”，不需要自己写命令实现，也不需要去理解 RamFS 的内部结构。\n\n## 完成标准\n- 可以在 VS Code 中点击 **Build** 成功构建工程。\n- 通过底部的 **Run** 按钮运行程序后，能够看到 LibXR 终端的提示符并与之交互。\n- 能够输入 `ls`、`cd` 等基础命令，并看到合理的反馈。\n- 你知道：\n  - 终端实际跑在一个 LibXR 的线程里。\n  - RamFS 是终端背后用的内存文件系统，本节只需要知道有这么一层即可。\n  - 之前用来练手的 `bool led_on` 还在，以后可以通过命令行来控制它，而不再用死循环刷日志。",
-                    "link": "https://xrobot-org.github.io/docs/basic_coding/middleware/terminal",
-                    "estimateMinutes": 20
-                },
-                {
-                    "id": "linux_newbie_basics_review",
-                    "title": "小结：从简单循环到终端的一条线",
-                    "desc": "## 本任务目标\n- 把这一章在 Linux 上做过的几件小事串起来：\n  - 最小的循环 + `Sleep`。\n  - 用一个 `bool` 表示“LED 状态”。\n  - 把 LibXR 终端和 RamFS 跑起来。\n- 明确 Linux 路线现在的定位：\n  - 先把“线程 / 时间 / 中间件”这些概念在 PC 上练熟。\n  - MCU 真正的 GPIO / 串口等硬件，交给另一条路线去详细展开。\n\n## 你现在已经有的东西\n- 一个可重复使用的 Linux 工程骨架 `xr_hello_linux`：\n  - 顶层 `CMakeLists.txt` + `User/main.cpp` + `libxr/` 源码目录。\n  - 能在 VS Code 中通过底部 **Build** 按钮稳定构建。\n  - 能通过底部 **Run** 按钮直接运行可执行文件。\n- 在 `main.cpp` 里：\n  - 知道在启动时要先调用 `LibXR::PlatformInit();`。\n  - 写过一个循环，用 `LibXR::Thread::Sleep` 控制节奏。\n  - 用一个 `bool led_on` 当作“LED 状态”，并按需打印日志。\n  - 能创建 `LibXR::RamFS` 和 `LibXR::Terminal`，并用 `LibXR::Thread` 把终端跑在单独线程里。\n\n## 以后看到“硬件相关”的示例可以怎么理解\n- 虽然现在在 Linux 上没有真实 GPIO，模式是一样的：\n  - 用一个变量表示硬件状态（比如“灯亮 / 灭”）。\n  - 用一个线程或循环按一定条件去修改它。\n  - 通过日志或命令行查看 / 控制这个状态。\n- MCU 路线上出现的 LibXR GPIO / UART 类虽然更复杂，但思路是一致的：\n  - 只是把 `bool` 换成了驱动类对象，背后帮你做了寄存器和中断相关的工作。\n\n## Terminal + RamFS 在 Linux 路线里的作用\n- Terminal：\n  - 让你在 PC 上就能体验“命令行中间件”的感觉，和 MCU 使用的是同一套接口和行为。\n  - 以后可以尝试把某些小功能挂成命令，比如：用命令控制 `led_on`，或打印调试信息。\n- RamFS：\n  - 目前主要是给终端提供目录和状态，本章不要求操作具体文件。\n  - 真正需要“用文件组织配置和脚本”时，再单独开章节细讲。\n\n## 和后续章节的关系\n- 下一章 `os_api_basics` 会更多站在“操作系统 API”的视角用 LibXR：\n  - 更系统地看线程、同步原语、定时器等。\n  - 在 Linux 上写出结构更清晰的多线程小程序。\n- 这一章的目标已经达成：\n  - 你知道如何把 LibXR 当普通 C++ 库接到自己的工程里。\n  - 你用 VS Code 的 **Build** / **Run** 完成了构建和运行，不再依赖零散命令行。\n  - 你见过 LibXR 的终端和 RamFS，大概知道“以后很多功能会挂在这套终端环境上”。\n\n## 完成标准\n- 你可以用自己的话描述当前 `xr_hello_linux` 工程有哪些部分，以及各自负责什么。\n- 你理解：Linux 路线里的“LED”只是一个帮助你练习思想的布尔量，真正的硬件控制留给 MCU 路线。\n- 你清楚：\n  - 构建和运行都推荐通过 VS Code 底部的 **Build** / **Run** 按钮完成。\n  - 终端和 RamFS 是后续很多能力的承载环境，在 Linux 上先熟悉它们，会让 MCU 路线轻松很多。",
-                    "link": "https://xrobot-org.github.io/docs",
-                    "estimateMinutes": 10
-                }
-            ],
-            "next": "os_api_basics"
+        {
+          "id": "linux_newbie_env_setup",
+          "title": "Linux 环境配置：编译器 / VS Code / Git",
+          "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
+          "estimateMinutes": 20,
+          "descMd": "md/linux_newbie_env/linux_newbie_env_setup.md"
+        },
+        {
+          "id": "linux_newbie_basics_hello_cmake",
+          "title": "第一个 LibXR CMake 工程：Hello LibXR（Linux）",
+          "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
+          "estimateMinutes": 30,
+          "descMd": "md/linux_newbie_env/linux_newbie_basics_hello_cmake.md"
+        },
+        {
+          "id": "linux_newbie_basics_debug",
+          "title": "在 VS Code 中调试第一个 LibXR 程序",
+          "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
+          "estimateMinutes": 25,
+          "descMd": "md/linux_newbie_env/linux_newbie_basics_debug.md"
+        },
+        {
+          "id": "linux_newbie_env_review",
+          "title": "小结：从环境到第一个可调试的 LibXR 工程",
+          "link": "https://xrobot-org.github.io/docs/env_setup/env-setup-linux",
+          "estimateMinutes": 10,
+          "descMd": "md/linux_newbie_env/linux_newbie_env_review.md"
         }
+      ],
+      "next": "linux_newbie_basics"
+    },
+    "linux_newbie_basics": {
+      "type": "task",
+      "title": "Linux · 新手 · LibXR 基础循环与终端体验",
+      "subtitle": "在现有 CMake 工程上，用一个布尔量当作“LED”练习循环，再跑起来 LibXR 终端。",
+      "tags": [
+        "Linux",
+        "新手",
+        "LibXR",
+        "Terminal",
+        "RamFS"
+      ],
+      "tasks": [
+        {
+          "id": "linux_newbie_basics_fake_led",
+          "title": "用一个布尔量当作“LED”：LibXR 上的第一个循环",
+          "link": "https://xrobot-org.github.io/docs",
+          "estimateMinutes": 15,
+          "descMd": "md/linux_newbie_basics/linux_newbie_basics_fake_led.md"
+        },
+        {
+          "id": "linux_newbie_basics_terminal_ramfs",
+          "title": "在 Linux 上启用 LibXR 终端（RamFS 命令行）",
+          "link": "https://xrobot-org.github.io/docs/basic_coding/middleware/terminal",
+          "estimateMinutes": 20,
+          "descMd": "md/linux_newbie_basics/linux_newbie_basics_terminal_ramfs.md"
+        },
+        {
+          "id": "linux_newbie_basics_review",
+          "title": "小结：从简单循环到终端的一条线",
+          "link": "https://xrobot-org.github.io/docs",
+          "estimateMinutes": 10,
+          "descMd": "md/linux_newbie_basics/linux_newbie_basics_review.md"
+        }
+      ],
+      "next": "os_api_basics"
     }
+  }
 }

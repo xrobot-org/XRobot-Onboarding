@@ -5,12 +5,43 @@ const CONFIG_URL = "config.json";
 let treeConfig = null;
 let state = null;
 
+const mdTextCache = {};
+
 function md(text) {
   if (!text) return "";
   if (window.marked) {
     return window.marked.parse(text);
   }
   return String(text);
+}
+
+function loadMdIntoElement(path, el) {
+  if (!path || !el) return;
+
+  // 有缓存就直接用
+  if (mdTextCache[path]) {
+    el.innerHTML = md(mdTextCache[path]);
+    return;
+  }
+
+  // 初始先给个占位提示
+  el.textContent = "加载内容中…";
+
+  fetch(path)
+    .then(res => {
+      if (!res.ok) {
+        throw new Error("加载 markdown 失败: " + path);
+      }
+      return res.text();
+    })
+    .then(text => {
+      mdTextCache[path] = text;
+      el.innerHTML = md(text);
+    })
+    .catch(err => {
+      console.error(err);
+      el.textContent = "（加载任务说明失败，请检查 " + path + " 是否存在且可访问）";
+    });
 }
 
 
@@ -417,7 +448,12 @@ function renderTaskNode(nodeRaw) {
 
     main.appendChild(line1);
 
-    if (t.desc) {
+    if (t.descMd) {
+      const desc = document.createElement("div");
+      desc.className = "task-desc";
+      main.appendChild(desc);
+      loadMdIntoElement(t.descMd, desc);
+    } else if (t.desc) {
       const desc = document.createElement("div");
       desc.className = "task-desc";
       desc.innerHTML = md(t.desc);
