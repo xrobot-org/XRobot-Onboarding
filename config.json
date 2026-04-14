@@ -39,7 +39,7 @@
         {
           "id": "os_api",
           "label": "系统层 · 操作系统 API",
-          "desc": "已经有自己的工程环境，只想学习 LibXR 提供的统一线程 / 同步原语 / 定时器 / 异步 I/O 接口。",
+          "desc": "已经有自己的工程环境，只想学习 LibXR 提供的统一线程 / 同步原语 / 定时器 / 异步任务接口。",
           "next": "os_api_basics",
           "profile": {
             "exp": "any",

@@ -27,7 +27,7 @@
         {
           "id": "mcu_newbie_env_board_debugger",
           "title": "准备并连接 STM32 开发板与调试器",
-          "link": "",
+          "link": "https://xrobot-org.github.io/docs/debug",
           "estimateMinutes": 10,
           "descMd": "md/mcu_newbie_env/mcu_newbie_env_board_debugger.md"
         },
@@ -62,14 +62,14 @@
         {
           "id": "mcu_newbie_basics_read_app_main",
           "title": "认识生成后的 LibXR 工程并接入 app_main()",
-          "link": "",
+          "link": "https://xrobot-org.github.io/docs/code_gen/stm32",
           "estimateMinutes": 15,
           "descMd": "md/mcu_newbie_basics/mcu_newbie_basics_read_app_main.md"
         },
         {
           "id": "mcu_newbie_basics_blink_led",
           "title": "在 app_main() 中用 LibXR GPIO 实现第一个 LED 闪烁",
-          "link": "",
+          "link": "https://xrobot-org.github.io/docs/code_gen/stm32/stm32-code-gen-gpio",
           "estimateMinutes": 20,
           "descMd": "md/mcu_newbie_basics/mcu_newbie_basics_blink_led.md"
         },
@@ -90,7 +90,7 @@
         {
           "id": "mcu_newbie_basics_review",
           "title": "小结：从 CubeMX 到 app_main 的完整链路和学习方法",
-          "link": "",
+          "link": "https://xrobot-org.github.io/docs/code_gen/stm32",
           "estimateMinutes": 10,
           "descMd": "md/mcu_newbie_basics/mcu_newbie_basics_review.md"
         }
@@ -114,7 +114,7 @@
         {
           "id": "mcu_newbie_periph_overview",
           "title": "其他外设与基础中间件：能力与文档入口",
-          "link": "https://xrobot-org.github.io/docs/intro",
+          "link": "https://xrobot-org.github.io/docs/code_gen/stm32",
           "estimateMinutes": 60,
           "descMd": "md/mcu_newbie_periph/mcu_newbie_periph_overview.md"
         },
@@ -135,7 +135,7 @@
         {
           "id": "mcu_newbie_periph_review",
           "title": "小结：外设封装 / USB 串口 / 终端 / Flash 数据库 的整体图",
-          "link": "",
+          "link": "https://xrobot-org.github.io/docs/basic_coding/middleware",
           "estimateMinutes": 10,
           "descMd": "md/mcu_newbie_periph/mcu_newbie_periph_review.md"
         }

@@ -63,7 +63,7 @@
         {
           "id": "linux_newbie_basics_fake_led",
           "title": "用一个布尔量当作“LED”：LibXR 上的第一个循环",
-          "link": "https://xrobot-org.github.io/docs/intro",
+          "link": "https://xrobot-org.github.io/docs/basic_coding/system/thread",
           "estimateMinutes": 15,
           "descMd": "md/linux_newbie_basics/linux_newbie_basics_fake_led.md"
         },
@@ -77,7 +77,7 @@
         {
           "id": "linux_newbie_basics_review",
           "title": "小结：从简单循环到终端的一条线",
-          "link": "https://xrobot-org.github.io/docs/intro",
+          "link": "https://xrobot-org.github.io/docs/basic_coding/middleware",
           "estimateMinutes": 10,
           "descMd": "md/linux_newbie_basics/linux_newbie_basics_review.md"
         }

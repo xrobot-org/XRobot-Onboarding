@@ -15,7 +15,7 @@
         {
           "id": "os_api_intro",
           "title": "运行环境入门：裸机 / RTOS / Linux 是啥",
-          "link": "",
+          "link": "https://xrobot-org.github.io/docs/basic_coding/system",
           "estimateMinutes": 10,
           "descMd": "md/os_api_basics/os_api_intro.md"
         },
