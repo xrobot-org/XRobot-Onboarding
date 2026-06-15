@@ -1,9 +1,12 @@
 // onboarding.js - profile-aware skill tree onboarding
 
 const CONFIG_URL = "config.json";
+const THEME_STORAGE_KEY = "xrobot_onboarding_theme";
+const DARK_MODE_MEDIA_QUERY = "(prefers-color-scheme: dark)";
 
 let treeConfig = null;
 let state = null;
+let themeMediaQuery = null;
 
 const mdTextCache = {};
 
@@ -15,12 +18,218 @@ function md(text) {
   return String(text);
 }
 
+const ALLOWED_HTML_TAGS = new Set([
+  "A",
+  "B",
+  "BLOCKQUOTE",
+  "BR",
+  "CODE",
+  "DEL",
+  "EM",
+  "H1",
+  "H2",
+  "H3",
+  "H4",
+  "H5",
+  "H6",
+  "HR",
+  "I",
+  "LI",
+  "OL",
+  "P",
+  "PRE",
+  "STRONG",
+  "UL"
+]);
+
+const ALLOWED_HTML_ATTRS = {
+  A: new Set(["href", "title"])
+};
+
+function isSafeUrl(url) {
+  if (!url) return false;
+
+  const normalized = String(url).trim();
+  if (!normalized) return false;
+
+  if (normalized.startsWith("#") || normalized.startsWith("/")) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(normalized, window.location.href);
+    return ["http:", "https:", "mailto:"].includes(parsed.protocol);
+  } catch (e) {
+    return false;
+  }
+}
+
+function isExternalHttpUrl(url) {
+  try {
+    const parsed = new URL(url, window.location.href);
+    return ["http:", "https:"].includes(parsed.protocol) && parsed.origin !== window.location.origin;
+  } catch (e) {
+    return false;
+  }
+}
+
+function sanitizeHtml(html) {
+  const parsedHtml = new DOMParser().parseFromString(String(html || ""), "text/html");
+
+  const sanitizeNode = node => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return document.createTextNode(node.textContent || "");
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return document.createDocumentFragment();
+    }
+
+    const tagName = node.tagName.toUpperCase();
+    if (!ALLOWED_HTML_TAGS.has(tagName)) {
+      const fragment = document.createDocumentFragment();
+      Array.from(node.childNodes).forEach(child => {
+        fragment.appendChild(sanitizeNode(child));
+      });
+      return fragment;
+    }
+
+    const clean = document.createElement(tagName.toLowerCase());
+    const allowedAttrs = ALLOWED_HTML_ATTRS[tagName] || new Set();
+
+    Array.from(node.attributes).forEach(attr => {
+      const attrName = attr.name.toLowerCase();
+      if (!allowedAttrs.has(attrName)) {
+        return;
+      }
+
+      if (attrName === "href" && !isSafeUrl(attr.value)) {
+        return;
+      }
+
+      clean.setAttribute(attr.name, attr.value);
+    });
+
+    if (tagName === "A" && clean.hasAttribute("href")) {
+      const href = clean.getAttribute("href");
+      if (isExternalHttpUrl(href)) {
+        clean.setAttribute("rel", "noopener noreferrer");
+        clean.setAttribute("target", "_blank");
+      }
+    }
+
+    Array.from(node.childNodes).forEach(child => {
+      clean.appendChild(sanitizeNode(child));
+    });
+
+    return clean;
+  };
+
+  const fragment = document.createDocumentFragment();
+  Array.from(parsedHtml.body.childNodes).forEach(child => {
+    fragment.appendChild(sanitizeNode(child));
+  });
+  return fragment;
+}
+
+function setSanitizedMarkdown(el, markdownText) {
+  if (!el) return;
+  el.replaceChildren(sanitizeHtml(md(markdownText || "")));
+}
+
+function getStoredThemePreference() {
+  try {
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    if (savedTheme === "light" || savedTheme === "dark") {
+      return savedTheme;
+    }
+  } catch (e) {
+    console.warn("读取主题偏好失败", e);
+  }
+
+  return null;
+}
+
+function getSystemTheme() {
+  if (window.matchMedia && window.matchMedia(DARK_MODE_MEDIA_QUERY).matches) {
+    return "dark";
+  }
+
+  return "light";
+}
+
+function getPreferredTheme() {
+  return getStoredThemePreference() || getSystemTheme();
+}
+
+function updateThemeToggleLabel(theme) {
+  const nextTheme = theme === "dark" ? "light" : "dark";
+  const nextLabel = nextTheme === "dark" ? "切换到深色模式" : "切换到浅色模式";
+  const toggleButton = document.getElementById("theme-toggle-button");
+  const toggleText = document.getElementById("theme-toggle-text");
+
+  if (toggleButton) {
+    toggleButton.setAttribute("aria-label", nextLabel);
+    toggleButton.setAttribute("title", nextLabel);
+  }
+
+  if (toggleText) {
+    toggleText.textContent = nextLabel;
+  }
+}
+
+function applyTheme(theme, options = {}) {
+  const nextTheme = theme === "dark" ? "dark" : "light";
+  const { persist = true } = options;
+  document.documentElement.setAttribute("data-theme", nextTheme);
+  updateThemeToggleLabel(nextTheme);
+
+  if (persist) {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    } catch (e) {
+      console.warn("保存主题偏好失败", e);
+    }
+  }
+}
+
+function handleSystemThemeChange(event) {
+  if (getStoredThemePreference()) {
+    return;
+  }
+
+  applyTheme(event.matches ? "dark" : "light", { persist: false });
+}
+
+function initThemeToggle() {
+  const toggleButton = document.getElementById("theme-toggle-button");
+  const storedTheme = getStoredThemePreference();
+  applyTheme(storedTheme || getSystemTheme(), { persist: !!storedTheme });
+
+  if (toggleButton) {
+    toggleButton.addEventListener("click", () => {
+      const currentTheme = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+      const nextTheme = currentTheme === "dark" ? "light" : "dark";
+      applyTheme(nextTheme, { persist: true });
+    });
+  }
+
+  if (window.matchMedia) {
+    themeMediaQuery = window.matchMedia(DARK_MODE_MEDIA_QUERY);
+    if (typeof themeMediaQuery.addEventListener === "function") {
+      themeMediaQuery.addEventListener("change", handleSystemThemeChange);
+    } else if (typeof themeMediaQuery.addListener === "function") {
+      themeMediaQuery.addListener(handleSystemThemeChange);
+    }
+  }
+}
+
 function loadMdIntoElement(path, el) {
   if (!path || !el) return;
 
   // 有缓存就直接用
   if (mdTextCache[path]) {
-    el.innerHTML = md(mdTextCache[path]);
+    setSanitizedMarkdown(el, mdTextCache[path]);
     return;
   }
 
@@ -36,7 +245,7 @@ function loadMdIntoElement(path, el) {
     })
     .then(text => {
       mdTextCache[path] = text;
-      el.innerHTML = md(text);
+      setSanitizedMarkdown(el, text);
     })
     .catch(err => {
       console.error(err);
@@ -306,7 +515,7 @@ function renderChoiceNode(node) {
     if (opt.desc) {
       const d = document.createElement("div");
       d.className = "choice-desc";
-      d.innerHTML = md(opt.desc);
+      setSanitizedMarkdown(d, opt.desc);
       main.appendChild(d);
     }
 
@@ -456,7 +665,7 @@ function renderTaskNode(nodeRaw) {
     } else if (t.desc) {
       const desc = document.createElement("div");
       desc.className = "task-desc";
-      desc.innerHTML = md(t.desc);
+      setSanitizedMarkdown(desc, t.desc);
       main.appendChild(desc);
     }
 
@@ -527,7 +736,7 @@ function render() {
   const app = document.getElementById("app");
   if (!app) return;
 
-  app.innerHTML = "";
+  app.replaceChildren();
 
   const currentId = state.currentNodeId || treeConfig.root;
   const nodeRaw = treeConfig.nodes[currentId];
@@ -570,6 +779,8 @@ function render() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  initThemeToggle();
+
   loadConfig()
     .then(cfg => {
       treeConfig = cfg;
