@@ -137,17 +137,12 @@ function setSanitizedMarkdown(el, markdownText) {
   el.replaceChildren(sanitizeHtml(md(markdownText || "")));
 }
 
-function getStoredThemePreference() {
+function clearStoredThemePreference() {
   try {
-    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-    if (savedTheme === "light" || savedTheme === "dark") {
-      return savedTheme;
-    }
+    localStorage.removeItem(THEME_STORAGE_KEY);
   } catch (e) {
-    console.warn("读取主题偏好失败", e);
+    console.warn("清除主题偏好失败", e);
   }
-
-  return null;
 }
 
 function getSystemTheme() {
@@ -156,10 +151,6 @@ function getSystemTheme() {
   }
 
   return "light";
-}
-
-function getPreferredTheme() {
-  return getStoredThemePreference() || getSystemTheme();
 }
 
 function updateThemeToggleLabel(theme) {
@@ -178,39 +169,26 @@ function updateThemeToggleLabel(theme) {
   }
 }
 
-function applyTheme(theme, options = {}) {
+function applyTheme(theme) {
   const nextTheme = theme === "dark" ? "dark" : "light";
-  const { persist = true } = options;
   document.documentElement.setAttribute("data-theme", nextTheme);
   updateThemeToggleLabel(nextTheme);
-
-  if (persist) {
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
-    } catch (e) {
-      console.warn("保存主题偏好失败", e);
-    }
-  }
 }
 
 function handleSystemThemeChange(event) {
-  if (getStoredThemePreference()) {
-    return;
-  }
-
-  applyTheme(event.matches ? "dark" : "light", { persist: false });
+  applyTheme(event.matches ? "dark" : "light");
 }
 
 function initThemeToggle() {
   const toggleButton = document.getElementById("theme-toggle-button");
-  const storedTheme = getStoredThemePreference();
-  applyTheme(storedTheme || getSystemTheme(), { persist: !!storedTheme });
+  clearStoredThemePreference();
+  applyTheme(getSystemTheme());
 
   if (toggleButton) {
     toggleButton.addEventListener("click", () => {
       const currentTheme = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
       const nextTheme = currentTheme === "dark" ? "light" : "dark";
-      applyTheme(nextTheme, { persist: true });
+      applyTheme(nextTheme);
     });
   }
 
